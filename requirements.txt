@@ -1,0 +1,33 @@
+# Data Processing & ML
+pandas==2.2.0
+numpy==1.24.3
+scikit-learn==1.4.2
+xgboost==2.0.3
+lightgbm==4.0.0
+
+# Hyperparameter Tuning & Explainability
+optuna==3.1.1
+shap==0.44.0
+
+# Visualization
+matplotlib==3.8.3
+seaborn==0.13.1
+plotly==5.18.0
+
+# API & Web Framework
+fastapi==0.109.0
+uvicorn==0.27.0
+pydantic==2.5.3
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Testing & Quality
+pytest==7.4.3
+black==24.1.1
+flake8==7.0.0
+
+# Jupyter
+jupyter==1.0.0
+ipykernel==6.29.2

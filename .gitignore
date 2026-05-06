@@ -1,0 +1,21 @@
+# Data
+data/
+*.csv
+*.xlsx
+
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyke
+.venv/
+*.egg-info/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Model artifacts (stored on HF Hub)
+models/*.pkl
+models/*.json
