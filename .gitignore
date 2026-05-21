@@ -11,6 +11,7 @@ data/
 __pycache__/
 *.pyke
 .venv/
+.venv312/
 *.egg-info/
 
 # Notebooks checkpoints

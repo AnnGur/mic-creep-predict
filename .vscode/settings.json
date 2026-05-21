@@ -1,0 +1,6 @@
+{
+    "jupyter.notebookStartTimeout": 120,
+    "jupyter.kernels.trusted": [
+        "/Users/anna_gurina/Desktop/KSE_Bioinformatics/AMR challenge/mic-creep-predict/.venv312/bin/python"
+    ]
+}
