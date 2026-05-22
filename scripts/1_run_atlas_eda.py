@@ -116,14 +116,14 @@ def _yearly_stats(df: pd.DataFrame) -> pd.DataFrame:
 
 def print_yearly_table(df: pd.DataFrame) -> None:
     yearly = _yearly_stats(df)
-    print(f"\n{'Year':>4}  {'N':>6}  {'MIC₅₀':>6}  {'MIC₉₀':>6}  {'%R':>5}")
+    print(f"\n{'Year':>4}  {'N':>6}  {'MIC_50':>6}  {'MIC_90':>6}  {'%R':>5}")
     print("-" * 36)
     for _, r in yearly.iterrows():
         print(f"{int(r.Year):4d}  {int(r.n):6,}  {r.mic50:6.2f}  {r.mic90:6.2f}  {r.pct_resistant:5.1f}%")
 
 
 # ---------------------------------------------------------------------------
-# Section 2 — MIC₉₀ trend (main result chart)
+# Section 2 — MIC_90 trend (main result chart)
 # ---------------------------------------------------------------------------
 
 def plot_mic90_trend(df: pd.DataFrame, out: Path) -> None:
@@ -134,8 +134,8 @@ def plot_mic90_trend(df: pd.DataFrame, out: Path) -> None:
 
     fig, ax1 = plt.subplots()
 
-    ax1.plot(yearly["Year"], yearly["mic90"], "o-", color="#d62728", lw=2.5, ms=6, label="MIC₉₀", zorder=3)
-    ax1.plot(yearly["Year"], yearly["mic50"], "s--", color="#1f77b4", lw=1.5, ms=5, label="MIC₅₀", alpha=0.8, zorder=3)
+    ax1.plot(yearly["Year"], yearly["mic90"], "o-", color="#d62728", lw=2.5, ms=6, label="MIC_90", zorder=3)
+    ax1.plot(yearly["Year"], yearly["mic50"], "s--", color="#1f77b4", lw=1.5, ms=5, label="MIC_50", alpha=0.8, zorder=3)
     ax1.plot(yearly["Year"], int90 + slope90 * yearly["Year"], "-", color="#d62728", alpha=0.25, lw=2)
     ax1.plot(yearly["Year"], int50 + slope50 * yearly["Year"], "-", color="#1f77b4", alpha=0.25, lw=2)
     ax1.axhline(EUCAST_R, color="black", linestyle=":", lw=1.5, label=f"EUCAST R ({EUCAST_R} mg/L)")
@@ -146,8 +146,8 @@ def plot_mic90_trend(df: pd.DataFrame, out: Path) -> None:
     ax1.set_xlabel("Year", fontsize=11)
     ax1.legend(loc="upper left", fontsize=9)
     ax1.set_title(
-        f"K. pneumoniae Meropenem MIC₉₀ Trend 2004–2024\n"
-        f"MIC₉₀ slope: {slope90:+.3f} mg/L/yr  (R²={r90**2:.2f}, p={p90:.2e})",
+        f"K. pneumoniae Meropenem MIC_90 Trend 2004–2024\n"
+        f"MIC_90 slope: {slope90:+.3f} mg/L/yr  (R²={r90**2:.2f}, p={p90:.2e})",
         fontsize=12,
         fontweight="bold",
     )
@@ -163,8 +163,8 @@ def plot_mic90_trend(df: pd.DataFrame, out: Path) -> None:
     fig.savefig(out / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  → {fname}")
-    print(f"     MIC₉₀ slope: {slope90:+.4f} mg/L/yr | R²={r90**2:.3f} | p={p90:.2e}")
-    print(f"     MIC₅₀ slope: {slope50:+.4f} mg/L/yr | R²={r50**2:.3f} | p={p50:.2e}")
+    print(f"     MIC_90 slope: {slope90:+.4f} mg/L/yr | R²={r90**2:.3f} | p={p90:.2e}")
+    print(f"     MIC_50 slope: {slope50:+.4f} mg/L/yr | R²={r50**2:.3f} | p={p50:.2e}")
 
 
 # ---------------------------------------------------------------------------
@@ -188,9 +188,9 @@ def plot_violin(df: pd.DataFrame, out: Path) -> None:
     )
     ax.axhline(
         np.log2(EUCAST_R), color="black", linestyle="--", lw=1.5,
-        label=f"R breakpoint (log₂ = {np.log2(EUCAST_R):.0f})",
+        label=f"R breakpoint (log2 = {np.log2(EUCAST_R):.0f})",
     )
-    ax.set_ylabel("log₂(MIC) [log₂ mg/L]", fontsize=11)
+    ax.set_ylabel("log2(MIC) [log2 mg/L]", fontsize=11)
     ax.set_xlabel("Year", fontsize=11)
     ax.set_title(
         "Meropenem MIC Distribution by Year — K. pneumoniae (ATLAS)",
@@ -227,8 +227,8 @@ def plot_geographic(df: pd.DataFrame, out: Path) -> None:
 
     axes[0].barh(top_mic90["Country"], top_mic90["mic90"], color="#d62728", alpha=0.8)
     axes[0].axvline(EUCAST_R, color="black", linestyle="--", lw=1.2, label="R breakpoint")
-    axes[0].set_xlabel("MIC₉₀ (mg/L)", fontsize=11)
-    axes[0].set_title("MIC₉₀ by Country (top 30, ≥50 isolates)", fontsize=11, fontweight="bold")
+    axes[0].set_xlabel("MIC_90 (mg/L)", fontsize=11)
+    axes[0].set_title("MIC_90 by Country (top 30, ≥50 isolates)", fontsize=11, fontweight="bold")
     axes[0].legend(fontsize=9)
 
     axes[1].barh(top_resist["Country"], top_resist["pct_resistant"] * 100, color="#ff7f0e", alpha=0.8)
@@ -244,7 +244,7 @@ def plot_geographic(df: pd.DataFrame, out: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Section 5 — MIC₉₀ by age group over time
+# Section 5 — MIC_90 by age group over time
 # ---------------------------------------------------------------------------
 
 def plot_age_groups(df: pd.DataFrame, out: Path) -> None:
@@ -269,8 +269,8 @@ def plot_age_groups(df: pd.DataFrame, out: Path) -> None:
     axes[0].axhline(EUCAST_R, linestyle="--", color="black", lw=1.2, label="R breakpoint")
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(age_stats.index)
-    axes[0].set_ylabel("MIC₉₀ (mg/L)")
-    axes[0].set_title("MIC₉₀ by Age Group")
+    axes[0].set_ylabel("MIC_90 (mg/L)")
+    axes[0].set_title("MIC_90 by Age Group")
     axes[0].legend(fontsize=8)
 
     axes[1].bar(x, age_stats["pct_resistant"] * 100, color=palette)
@@ -301,10 +301,10 @@ def plot_age_groups(df: pd.DataFrame, out: Path) -> None:
     ax2.axhline(EUCAST_R, color="black", linestyle=":", lw=1.5, label="EUCAST R breakpoint")
     ax2.set_yscale("log", base=2)
     ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:g}"))
-    ax2.set_ylabel("MIC₉₀ (mg/L)", fontsize=11)
+    ax2.set_ylabel("MIC_90 (mg/L)", fontsize=11)
     ax2.set_xlabel("Year", fontsize=11)
     ax2.legend(fontsize=9)
-    ax2.set_title("MIC₉₀ by Age Group Over Time — K. pneumoniae Meropenem (ATLAS)", fontsize=12, fontweight="bold")
+    ax2.set_title("MIC_90 by Age Group Over Time — K. pneumoniae Meropenem (ATLAS)", fontsize=12, fontweight="bold")
     plt.tight_layout()
 
     fname1 = "age_group_bar.png"
@@ -321,20 +321,48 @@ def plot_age_groups(df: pd.DataFrame, out: Path) -> None:
 # Section 6 — Military proxy
 # ---------------------------------------------------------------------------
 
+MIN_N_MILITARY = 50  # minimum isolates per year for a reliable MIC_90 estimate
+
 def plot_military_proxy(df: pd.DataFrame, out: Path) -> None:
-    mil_yr = df[df["military_proxy"]].groupby("Year")["mic_value"].quantile(0.90).reset_index()
+    mil = df[df["military_proxy"]]
+    mil_n   = mil.groupby("Year")["mic_value"].count().reset_index().rename(columns={"mic_value": "n"})
+    mil_mic = mil.groupby("Year")["mic_value"].quantile(0.90).reset_index().rename(columns={"mic_value": "mic90"})
+    mil_yr  = mil_n.merge(mil_mic, on="Year")
+
     gen_yr = df[~df["military_proxy"]].groupby("Year")["mic_value"].quantile(0.90).reset_index()
 
+    reliable   = mil_yr[mil_yr["n"] >= MIN_N_MILITARY]
+    unreliable = mil_yr[mil_yr["n"] <  MIN_N_MILITARY]
+
+    print(f"  Military proxy n per year (threshold={MIN_N_MILITARY}):")
+    for _, r in mil_yr.iterrows():
+        flag = "" if r.n >= MIN_N_MILITARY else "  ← low n, greyed out"
+        print(f"    {int(r.Year)}: n={int(r.n)}{flag}")
+
     fig, ax = plt.subplots()
+
     ax.plot(gen_yr["Year"], gen_yr["mic_value"], "o-", color="#1f77b4", lw=2, ms=5, label="General population")
-    ax.plot(mil_yr["Year"], mil_yr["mic_value"], "s--", color="#d62728", lw=2, ms=6, label="Military proxy (wound/male/18–60)")
+
+    # Reliable proxy years — solid red
+    if not reliable.empty:
+        ax.plot(reliable["Year"], reliable["mic90"], "s", color="#d62728", ms=7, zorder=4)
+        # Connect only consecutive reliable years with a line
+        ax.plot(reliable["Year"], reliable["mic90"], "s--", color="#d62728", lw=1.8,
+                label=f"Military proxy (n >= {MIN_N_MILITARY})")
+
+    # Unreliable years — grey markers, no line, small
+    if not unreliable.empty:
+        ax.scatter(unreliable["Year"], unreliable["mic90"],
+                   marker="s", color="grey", s=30, zorder=3, alpha=0.5,
+                   label=f"Military proxy (n < {MIN_N_MILITARY}, unreliable)")
+
     ax.axhline(EUCAST_R, color="black", linestyle=":", lw=1.5, label="EUCAST R breakpoint")
     ax.set_yscale("log", base=2)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:g}"))
-    ax.set_ylabel("MIC₉₀ (mg/L)", fontsize=11)
+    ax.set_ylabel("MIC_90 (mg/L)", fontsize=11)
     ax.set_xlabel("Year", fontsize=11)
     ax.legend(fontsize=9)
-    ax.set_title("Military Proxy vs General Population — MIC₉₀ Trend", fontsize=12, fontweight="bold")
+    ax.set_title("Military Proxy vs General Population — MIC_90 Trend", fontsize=12, fontweight="bold")
     plt.tight_layout()
     fname = "mic90_military_proxy.png"
     fig.savefig(out / fname, dpi=150, bbox_inches="tight")
@@ -369,9 +397,9 @@ def plot_specimen_source(df: pd.DataFrame, out: Path) -> None:
             f"n={int(row['n']):,}  ({row['pct_resistant']*100:.0f}%R)",
             va="center", fontsize=8,
         )
-    ax.set_xlabel("MIC₉₀ (mg/L)", fontsize=11)
+    ax.set_xlabel("MIC_90 (mg/L)", fontsize=11)
     ax.set_title(
-        "MIC₉₀ by Specimen Source (≥100 isolates) — K. pneumoniae Meropenem (ATLAS)",
+        "MIC_90 by Specimen Source (≥100 isolates) — K. pneumoniae Meropenem (ATLAS)",
         fontsize=12, fontweight="bold",
     )
     ax.legend(fontsize=9)
@@ -497,7 +525,7 @@ def main() -> None:
     print(f"\n[2/{n}] Year-by-year overview table")
     print_yearly_table(df)
 
-    print(f"\n[3/{n}] MIC₉₀ trend")
+    print(f"\n[3/{n}] MIC_90 trend")
     plot_mic90_trend(df, args.reports)
 
     print(f"\n[4/{n}] Violin by year")
