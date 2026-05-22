@@ -5,8 +5,11 @@ Vivli AMR Surveillance Challenge 2026
 Reads ATLAS raw data, builds feature matrix, time-splits, saves parquet files.
 
 Run:
-    python scripts/run_feature_engineering.py
-    python scripts/run_feature_engineering.py --data-dir data/raw --out data/processed
+    python3 scripts/2_run_feature_engineering.py
+    python3 scripts/2_run_feature_engineering.py --data-dir data/raw --out data/processed
+
+
+    .venv/bin/jupyter notebook
 """
 
 import argparse

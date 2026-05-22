@@ -144,3 +144,89 @@ Thoracentesis, endobronchial aspirate, and bronchoscopy sources have the highest
 **Target**: `log2(mic_value)` — continuous regression target.
 
 **Implementation**: `scripts/run_feature_engineering.py` and `notebooks/05_feature_engineering.ipynb`
+
+---
+
+## Feature Engineering Analysis
+
+*Generated from `scripts/run_feature_engineering.py`. Feature matrix: 91 columns, 62,891 train rows, 26,681 test rows.*
+
+### Dataset shape after split
+
+| | Train (2004–2018) | Test (2019–2022) |
+|---|---|---|
+| Rows | 62,891 | 26,681 |
+| Years covered | 15 | 4 |
+| % of dataset | 70% | 30% |
+
+Specimen breakdown (whole dataset): respiratory 25%, urine 24%, blood 22%, wound 14%, other 11%, peritoneal 4%.
+
+---
+
+### Censoring rate by split
+
+![Censoring by Split](censoring_by_split.png)
+
+The chart reveals a structural problem: the training set contains **two completely different measurement regimes**:
+
+- **2004–2011 (train)**: 83–87% censored — nearly all values at the panel floor
+- **2012–2018 (train)**: 25–37% censored — the most informative period; exact MIC values available
+- **2019–2022 (test)**: 88–90% censored — uniformly high, higher than even the early training years
+
+This is a **covariate shift**: the model trains on a period where censoring varies from 25% to 87%, then is tested on a period where censoring is locked at 88–90%. Without `pct_censored_year` as a feature, the model would confuse "2020 looks like 2004" (same censoring rate) with actual biology. Including it is not optional.
+
+---
+
+### Target distribution — Train vs Test
+
+![Target Distribution](target_distribution.png)
+
+Both panels show the same **extreme bimodal shape**: a massive spike at log₂ = −5 (MIC ≈ 0.03 mg/L, the imputed censoring floor), a near-empty middle, then a right tail of resistant isolates at log₂ = 4–5 (16–32 mg/L).
+
+| | Train 2004–2018 | Test 2019–2022 |
+|---|---|---|
+| Floor spike (log₂ = −5, ~65–75% of rows) | ~41,000 | ~20,000 |
+| Resistant tail (log₂ ≥ 3, i.e. MIC ≥ 8) | ~3,500 (~6%) | ~3,500 (~13%) |
+| Middle (−4 to 2) | ~18,000 (~29%) | ~3,000 (~12%) |
+
+Two direct consequences for modelling:
+
+1. **The middle collapses in the test set.** The 2012–2018 low-censoring years (the most information-rich part of training) produced many exact intermediate MIC values. In 2019–2022 almost everything is either at the floor or the ceiling. The model is tested on a more extreme distribution than it was trained on.
+
+2. **RMSE will be dominated by the floor spike.** Predicting log₂ = −5 for every isolate gives low RMSE because 75% of the test set is exactly there. The model must be evaluated separately on the resistant subset (MIC ≥ 8), which is where clinical value lies. Use **sample weights** to upweight resistant isolates during training, and always report RMSE split by susceptible vs resistant.
+
+---
+
+### Feature correlation — core + gene flags (train set)
+
+![Feature Correlation](feature_correlation.png)
+
+**Key correlations with log₂(MIC):**
+
+| Feature | r | Interpretation |
+|---|---|---|
+| NDM_pos | **+0.38** | Strongest single predictor — NDM fully hydrolyses carbapenems |
+| is_censored | **−0.47** | Mechanical: censored = at the floor = low MIC. **Artifact, not signal.** |
+| KPC_pos | +0.26 | Strong |
+| OXA_pos | +0.26 | Strong |
+| pct_censored_year | −0.06 | Weak negative (high censoring years → more values at floor) |
+| year | +0.15 | The creep signal in raw form |
+| age_paediatric | −0.08 | Paediatric isolates slightly more susceptible |
+| military_proxy | ~0 | No population-level linear effect |
+
+**Cross-feature correlations worth flagging:**
+
+- `year` vs `pct_censored_year`: **+0.61** — the methodology artifact and time are nearly collinear. Both features are needed; XGBoost handles this, linear models would not.
+- `NDM_pos` vs `OXA_pos`: **+0.38** — they frequently co-occur in the same strains or outbreak clusters. Their SHAP values will be partially redundant; domain expert must validate which is the causal driver in co-infected isolates.
+- `NDM_pos` vs `KPC_pos`: **~0** — independent mechanisms, no co-occurrence bias.
+
+**Critical modelling note**: `is_censored` will appear as a top-ranked feature in any importance plot because its −0.47 correlation with the target is the strongest numeric signal in the matrix. This is a **measurement artifact** (censored observations are, by construction, at the floor). Exclude `is_censored` from SHAP summary plots shown to domain experts or label it explicitly as a data-structure variable, not a biological predictor.
+
+---
+
+### Next step → Model training
+
+- `notebooks/06_model_training.ipynb` / `scripts/run_model_training.py`
+- Baseline: Random Forest, no tuning
+- Primary: XGBoost Regressor with Optuna tuning
+- Evaluation: overall RMSE + RMSE on resistant subset + MIC_90 trend from predictions vs actual

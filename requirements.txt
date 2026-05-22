@@ -24,6 +24,7 @@ pydantic>=2.7
 python-dotenv>=1.0
 requests>=2.32
 openpyxl>=3.1
+pyarrow>=16.0
 
 # Testing & Quality
 pytest>=8.2
