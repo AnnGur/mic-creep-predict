@@ -1,440 +1,227 @@
 # MIC Creep Prediction — Vivli AMR Challenge 2026
 
-Predicts **MIC Creep** (year-over-year drift in Minimum Inhibitory Concentration values) using machine learning. MIC creep is a precursor to full antibiotic resistance that flies under the radar of standard susceptibility reporting.
+Predicts **MIC Creep** — the gradual year-over-year drift in Minimum Inhibitory Concentration (MIC) values for *Klebsiella pneumoniae* + Meropenem — using machine learning.
 
-This is a Proof-of-Concept submission to the **Vivli AMR Surveillance Data Challenge 2026** and will serve as the MVP foundation for a subsequent INSCIENCE (Ukrainian national science funding) grant application.
+MIC creep is a precursor to full antibiotic resistance that flies under the radar of standard susceptibility reporting because values remain technically "susceptible" while drifting upward.
+
+**Status**: PoC complete — EDA, feature engineering, and model training done on ATLAS dataset.
 
 ---
 
-## 🎯 Scientific Objective
+## Scientific Objective
 
 | Parameter | Value |
 |-----------|-------|
-| **Pathogen** | *Klebsiella pneumoniae* (primary) or *Acinetobacter baumannii* |
-| **Antibiotic** | Meropenem (carbapenem class — last-resort drug) |
-| **Target Variable** | Quantitative MIC value (mg/L), modeled as log₂(MIC) |
-| **Primary Metric** | MIC₉₀ trend over time + RMSE of regression model |
-| **Data Source** | ATLAS (Pfizer) & SENTRY (JMI Labs) via Vivli AMR Register |
+| Pathogen | *Klebsiella pneumoniae* |
+| Antibiotic | Meropenem (carbapenem — last-resort drug) |
+| Target variable | log₂(MIC), continuous regression |
+| Primary metric | RMSE on resistant subset (MIC ≥ 8 mg/L) + MIC₉₀ trend |
+| Training data | ATLAS (Pfizer) via Vivli AMR Register |
+| Time split | Train ≤ 2018 · Test 2019–2022 (never shuffled) |
 
-### Vulnerable Group Proxies
-
-- **Military**: Isolates from wound/skin/blood samples in males of combat-relevant age
-- **Paediatric**: Isolates from patients aged 0–17 years
+**Result**: MIC creep confirmed — slope +1.97 mg/L/yr, R²=0.67, p=6.3×10⁻⁶.
+XGBoost achieves RMSE 1.96 log₂ on resistant isolates vs RF baseline 2.87 (32% improvement).
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 mic-creep-predict/
-├── CLAUDE.md                          # Full project specification
-├── README.md                          # This file
-├── requirements.txt                   # Python dependencies (locked versions)
-├── .gitignore                         # Git ignore rules (data/ protected)
+├── CLAUDE.md                         # Full project specification
+├── README.md                         # This file
+├── requirements.txt                  # Python dependencies
 │
 ├── data/
-│   └── raw/                           # Raw datasets (gitignored)
-│       ├── Klebsiella_pneumoniae_BVBRC_genome_amr.csv
-│       ├── Klebsiella_pneumoniae_isolates.tsv
-│       ├── Acinetobacter_baumannii_BVBRC_genome_amr.csv
-│       └── Acinetobacter_baumannii_isolates.tsv
+│   ├── raw/                          # ATLAS files (gitignored — local only)
+│   └── processed/                    # Feature matrices (gitignored)
+│       ├── X_train.parquet           # 62,891 rows x 91 features
+│       ├── X_test.parquet            # 26,681 rows x 91 features
+│       ├── y_train.parquet           # log2(MIC) train targets
+│       └── y_test.parquet            # log2(MIC) test targets
 │
-├── notebooks/                         # Exploratory analysis & development
-│   ├── 01_data_exploration.ipynb      # Initial data QA
-│   ├── 02_eda_temporal_trends.ipynb   # Year × country coverage heatmap
-│   └── 03_geographic_antibiotic_profile.ipynb  # Resistance patterns by region
+├── scripts/                          # Run these in order
+│   ├── 1_run_atlas_eda.py            # EDA -> 9 charts in reports/
+│   ├── 2_run_feature_engineering.py  # Build feature matrix -> data/processed/
+│   ├── 3_run_model_training.py       # Train RF + XGBoost -> models/ + reports/
+│   └── run_paediatric_diagnostic.py  # Diagnostic for paediatric MIC_90 anomaly
 │
-└── src/                               # Production code
-    ├── __init__.py
-    │
-    ├── data/
-    │   ├── __init__.py
-    │   ├── schema.py                  # Data schema definitions & validation
-    │   ├── loader.py                  # Load & join BVBRC AMR + isolate data
-    │   └── preprocessor.py            # MIC parsing, censoring, log2 transform
-    │
-    ├── features/
-    │   └── __init__.py                # Feature engineering (scaffolded)
-    │
-    └── models/
-        └── __init__.py                # Model training & evaluation (scaffolded)
+├── src/
+│   ├── data/
+│   │   ├── loader.py                 # ATLASLoader — filters K. pneumoniae + Meropenem
+│   │   └── preprocessor.py          # MIC parsing: ">8"->16, "<=0.06"->0.03, log2
+│   ├── features/
+│   │   └── engineer.py              # build_features(), time_split(), run_pipeline()
+│   └── models/
+│       └── __init__.py
+│
+├── notebooks/
+│   ├── 04_atlas_eda.ipynb
+│   ├── 04b_paediatric_diagnostic.ipynb
+│   └── 05_feature_engineering.ipynb
+│
+├── models/                           # Saved artefacts
+│   ├── rf_baseline.pkl
+│   ├── xgb_tuned.pkl
+│   ├── xgb_best_params.json
+│   └── feature_names.json
+│
+└── reports/                          # All generated outputs
+    ├── atlas_eda_analysis.md         # Full EDA writeup
+    ├── model_results.md              # Model evaluation report
+    ├── model_findings.md             # Summary for stakeholders
+    └── *.png                         # Charts
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1. Prerequisites
-
-- Python 3.9+
-- Virtual environment (recommended)
-
-### 2. Setup
+### 1. Setup
 
 ```bash
-# Clone repository
 git clone <repo-url>
 cd mic-creep-predict
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# .venv\Scripts\activate  # Windows
+python3.12 -m venv .venv
+source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Install Jupyter
-pip install jupyter
+# macOS only — clear Gatekeeper quarantine after install
+xattr -dr com.apple.quarantine .venv/
 ```
 
-### 3. Run Notebooks
+> **Data**: Obtain ATLAS dataset from the [Vivli AMR Register](https://www.vivli.org/) under a Data Use Agreement. Place the Excel file in `data/raw/`.
+
+### 2. Run the pipeline
+
+Run scripts in order from the project root:
 
 ```bash
-jupyter notebook notebooks/
+# Step 1 — EDA (generates 9 charts in reports/)
+.venv/bin/python scripts/1_run_atlas_eda.py
+
+# Step 2 — Feature engineering (generates train/test parquet in data/processed/)
+.venv/bin/python scripts/2_run_feature_engineering.py
+
+# Step 3 — Model training
+# Fast check (RF baseline only, ~2 min):
+.venv/bin/python scripts/3_run_model_training.py --skip-optuna
+
+# Full run (RF + XGBoost + Optuna tuning, ~10 min):
+.venv/bin/python scripts/3_run_model_training.py --n-trials 40
 ```
 
-Open:
-- **01_data_exploration.ipynb** — Overview of raw datasets
-- **02_eda_temporal_trends.ipynb** — Temporal & geographic coverage
-- **03_geographic_antibiotic_profile.ipynb** — Antibiotic resistance patterns
+All outputs go to `reports/`. Models saved to `models/`.
 
 ---
 
-## 🔧 Data Pipeline
+## Pipeline Details
 
-### Overview
+### Step 1 — EDA (`1_run_atlas_eda.py`)
 
-The data pipeline loads BVBRC genome-level AMR annotations and joins them with isolate metadata to enable temporal and geographic analysis.
+Loads ATLAS, filters to *K. pneumoniae* + Meropenem, produces:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  BVBRC Genome AMR Records                               │
-│  (Antibiotic, Measurement Value, Phenotype S/I/R)      │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     │ Join on Genome ID
-                     ↓
-┌────────────────────────────────────────────────────────┐
-│  BVBRC Isolate Metadata                                │
-│  (Isolate Create Date, Location, Source)              │
-└────────────────────┬───────────────────────────────────┘
-                     │
-                     ↓
-         ┌───────────────────────┐
-         │ Extract Temporal Data │ (year)
-         └───────────┬───────────┘
-                     │
-         ┌───────────↓───────────┐
-         │ Extract Geographic    │ (country)
-         └───────────┬───────────┘
-                     │
-         ┌───────────↓──────────────┐
-         │ Parse & Clean MIC Values │
-         │ - Handle censoring       │
-         │ - Validate ranges        │
-         └───────────┬──────────────┘
-                     │
-         ┌───────────↓──────────────┐
-         │ Log₂ Transform MIC       │
-         │ mic_log2 = log₂(mic_val) │
-         └───────────┬──────────────┘
-                     │
-                     ↓
-         ┌───────────────────────────┐
-         │ Ready for Modeling        │
-         │ Features: year, country,  │
-         │           age_group, sex  │
-         │ Target: mic_log2          │
-         └───────────────────────────┘
-```
+| Chart | What it shows |
+|---|---|
+| `mic90_trend_*.png` | MIC90 over time — creep signal + linear fit |
+| `mic_violin_by_year.png` | Full distribution shift year by year |
+| `geo_analysis.png` | MIC90 and %R by country |
+| `mic90_by_age_group.png` | Paediatric / adult / elderly comparison |
+| `mic90_military_proxy.png` | Wound/male/18-60 proxy with n-reliability check |
+| `gene_prevalence_over_time.png` | KPC / NDM / OXA / VIM / IMP / GES trends |
+| `data_quality.png` | Censoring rate + %R by year |
+| `specimen_source_mic90.png` | MIC90 by specimen type |
 
-### Key Modules
+### Step 2 — Feature Engineering (`2_run_feature_engineering.py`)
 
-**`src/data/loader.py`** — Loading & Joining
-```python
-from src.data.loader import BVBRCDataLoader
-from pathlib import Path
+Builds 91-column feature matrix:
 
-loader = BVBRCDataLoader(Path('data/raw'))
-joined = loader.load_and_join("Klebsiella pneumoniae")
-```
+| Group | Features |
+|---|---|
+| Temporal | `year` |
+| Demographics | `gender_male`, `age_paediatric`, `age_elderly` |
+| Clinical | `military_proxy`, `spec_wound/blood/resp/urine/peritoneal` |
+| Geographic | `ctry_*` (OHE, 73 countries, drop_first) |
+| Genes | `KPC_pos`, `NDM_pos`, `OXA_pos`, `VIM_pos`, `IMP_pos`, `GES_pos` |
+| Quality | `is_censored`, `pct_censored_year` |
 
-**`src/data/preprocessor.py`** — Cleaning & Transformation
-```python
-from src.data.preprocessor import MICPreprocessor
+Time split: train <= 2018, test 2019-2022. Never shuffled.
 
-# Parse censored MIC (e.g., ">8" → 16)
-value, op = MICPreprocessor.parse_censored_mic(">8")
+### Step 3 — Model Training (`3_run_model_training.py`)
 
-# Log₂-transform
-log2_mic = MICPreprocessor.log2_transform_mic(value)
+| Model | RMSE (all) | RMSE (resistant) | MAE (resistant) |
+|---|---|---|---|
+| RF baseline | 1.558 | 2.869 | 2.180 |
+| **XGBoost tuned** | **1.758** | **1.960** | **1.127** |
 
-# End-to-end cleaning
-cleaned = MICPreprocessor.clean_mic_dataframe(
-    df,
-    antibiotic="Meropenem",
-    min_year=2004,
-    max_year=2022
-)
-```
+Resistant subset = isolates with MIC >= 8 mg/L (EUCAST R breakpoint), n=4,305.
 
-**`src/data/schema.py`** — Data Definitions
-```python
-from src.data.schema import Pathogen, PhenotypeCategory, ProcessedDataSchema
-
-# Feature columns for modeling
-features = ProcessedDataSchema.FEATURE_COLUMNS
-# ['year', 'country', 'age_group', 'sex', 'specimen_type', 'infection_type']
-
-target = ProcessedDataSchema.TARGET_COLUMN
-# 'mic_log2'
+Key options:
+```bash
+--skip-optuna      # RF baseline only (fast)
+--n-trials N       # Optuna trial count (default 60)
 ```
 
 ---
 
-## 📊 Exploratory Notebooks
+## Key Findings
 
-### Notebook 1: Data Exploration (`01_data_exploration.ipynb`)
+See [reports/model_findings.md](reports/model_findings.md) for the full summary.
 
-Load raw datasets and inspect structure:
-- BVBRC AMR dataset (columns, data types, sample records)
-- Isolate metadata (temporal coverage, geographic distribution)
-- Antibiotic availability
-- Measurement Value statistics
+**Top SHAP features** (XGBoost, mean |SHAP value|):
 
-**Output**: Overview of dataset size, quality, and temporal range.
+| Rank | Feature | Score | Interpretation |
+|---|---|---|---|
+| 1 | KPC_pos | 0.94 | Strongest driver of high MIC |
+| 2 | is_censored | 0.54 | Artifact — censored = at floor = low MIC |
+| 3 | OXA_pos | 0.50 | Second carbapenemase family |
+| 4 | NDM_pos | 0.44 | Rising threat, not blocked by avibactam |
+| 5 | pct_censored_year | 0.33 | Surveillance methodology control |
+| 6 | ctry_China | 0.30 | High-resistance country signal |
+| 10 | year | 0.07 | Time-trend / creep signal |
 
-### Notebook 2: Temporal Trends (`02_eda_temporal_trends.ipynb`)
-
-Analyze year-over-year coverage:
-- **Heatmap**: Isolates by year × country (top 10 countries)
-- **Time series**: Records per year
-- **Creep signal detection**: (placeholder for when real MIC data arrives)
-
-**Output**: Visualization of surveillance coverage and temporal trends.
-
-### Notebook 3: Geographic Antibiotic Profile (`03_geographic_antibiotic_profile.ipynb`)
-
-Resistance patterns by region:
-- **Antibiotic distribution**: Coverage by antibiotic class
-- **Resistance phenotype by country**: Stacked bar chart (S/I/R)
-- **Regional hotspots**: High-burden resistance zones
-
-**Output**: Geographic patterns for targeting surveillance and intervention.
+> `is_censored` ranks #2 because censored observations are structurally at the MIC floor — it is a data artifact, not a biological predictor. Exclude from domain-expert SHAP presentations.
 
 ---
 
-## ⚠️ Data Security & Compliance
+## Data Security
 
-**CRITICAL — Do NOT commit:**
-- `/data/` directory (all raw data)
-- `*.csv`, `*.tsv` files
-- `.env` files with credentials
+Raw data is **never committed**. See `.gitignore`.
 
-**Compliance rules (per challenge):**
-- ✓ Raw data is local-only (never uploaded)
-- ✓ Public repository shows only code (no data)
-- ✓ Aggregated/predicted outputs only (no isolate-level records)
-- ✓ Credentials in `.env` (gitignored)
-- ✓ Vivli retains data stewardship — datasets cannot be redistributed
-
-See `.gitignore` for rules.
+- `/data/` — all raw and processed data (local only)
+- `*.csv`, `*.xlsx`, `*.parquet` — never committed
+- `.env` — credentials (never committed)
+- Vivli retains data stewardship — datasets cannot be redistributed
+- Public repo contains only code and aggregated reports
 
 ---
 
-## 🛠️ Model Architecture (Upcoming)
+## Next Steps
 
-### Task Type
-**Regression** — Predicting continuous log₂(MIC) values.
-
-### Train/Test Split — TIME-AWARE (Critical)
-- **Training**: 2004–2018
-- **Testing**: 2019–2022
-- ⚠️ Data must NEVER be randomly shuffled (leaks future info into training)
-
-### Features
-- `year` — ordinal, primary driver of creep signal
-- `country` — One-Hot Encoded
-- `age_group` — binned (paediatric / adult / elderly)
-- `sex` — binary
-- `specimen_type` — wound / blood / urine / respiratory / other
-- `infection_type` — hospital-acquired vs community-acquired
-
-### Handling Censored MIC Values
-MIC data frequently contains censored entries:
-- `">8"` → impute as next doubling dilution (16 mg/L)
-- `"<=0.5"` → impute as half the boundary (0.25 mg/L)
-- All values log₂-transformed **after** imputation
-- Methodology documented explicitly (reviewers will verify)
-
-### Evaluation Metrics
-- **RMSE** (Root Mean Squared Error) — primary
-- **MAE** (Mean Absolute Error) — secondary
-- **MIC₉₀ trend** — year-over-year slope + descriptive stats
-- **Log₂ slope/year** — quantitative creep rate
-
-### Model Explainability (SHAP)
-```python
-import shap
-
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(X_test)
-shap.summary_plot(shap_values, X_test)
-```
-
-**CRITICAL**: SHAP outputs must be validated by domain expert for biological plausibility before publication.
+- [ ] SHAP validation with domain expert (biological plausibility check)
+- [ ] FastAPI inference endpoint (`src/api/main.py`)
+- [ ] Push model artefact to Hugging Face Hub
+- [ ] Next.js dashboard for MIC trend visualisation
+- [ ] SENTRY dataset integration
+- [ ] Write challenge submission
 
 ---
 
-## 📋 8-Week Roadmap
+## Roadmap Status
 
 | Week | Task | Status |
 |------|------|--------|
-| 1–2 | Download ATLAS/SENTRY, filter to K. pneumoniae, clean MIC formats | Scaffolded ✓ |
-| 3–4 | Feature engineering, One-Hot Encoding, EDA plots by year | In progress |
-| 5–6 | Train XGBoost + RF baseline, time-split validation, tuning | Not started |
-| 7 | Extract SHAP values, build visualisations, validate with domain expert | Not started |
-| 8 | Package model, write submission, deploy prototype site | Not started |
+| 1-2 | Download ATLAS, filter K. pneumoniae, clean MIC formats | Done |
+| 3-4 | Feature engineering, EDA, OHE | Done |
+| 5-6 | Train RF + XGBoost, time-split validation, Optuna tuning | Done |
+| 7 | SHAP values, visualisations, domain expert validation | In progress |
+| 8 | Package model, submission, deploy prototype | Not started |
 
 ---
 
-## 🌐 Deployment Pipeline (Future)
+## License & Data Use
 
-### Backend API
-- **FastAPI** (Python) — REST endpoint for model predictions
-- Hosted on **Render.com** (free tier)
-- Loads saved model from Hugging Face Hub at startup
-
-### Frontend Dashboard
-- **Next.js** (React) — Interactive MIC trend visualisation
-- **Recharts** or **Plotly.js** — Time-series charts
-- Hosted on **Vercel** (free tier, auto-deploy from GitHub)
-
-### Storage & Infrastructure
-| Purpose | Tool | Cost |
-|---------|------|------|
-| Code & versioning | GitHub (public) | Free |
-| Model artifact | Hugging Face Hub | Free |
-| Aggregated results DB | Supabase (PostgreSQL) | Free tier |
-| Raw data | Local only (gitignored) | — |
-
----
-
-## 📚 Dependencies
-
-See `requirements.txt` for full list. Key packages:
-
-### Data Processing
-- `pandas==2.2.0` — data manipulation
-- `numpy==1.24.3` — numerical computing
-
-### Machine Learning
-- `scikit-learn==1.4.2` — pipeline, RF baseline, metrics
-- `xgboost==2.0.3` — primary model
-- `lightgbm==4.0.0` — optional alternative
-- `optuna==3.1.1` — hyperparameter tuning
-- `shap==0.44.0` — explainability
-
-### Visualization
-- `matplotlib==3.8.3`
-- `seaborn==0.13.1`
-- `plotly==5.18.0`
-
-### Deployment
-- `fastapi==0.109.0` — REST API
-- `uvicorn==0.27.0` — ASGI server
-- `pydantic==2.5.3` — data validation
-
----
-
-## 🔍 What's Inside `src/data/`
-
-### `schema.py`
-Data type definitions and validation:
-```python
-class Pathogen(str, Enum):
-    KLEBSIELLA_PNEUMONIAE = "Klebsiella pneumoniae"
-    ACINETOBACTER_BAUMANNII = "Acinetobacter baumannii"
-
-class PhenotypeCategory(str, Enum):
-    SUSCEPTIBLE = "S"
-    INTERMEDIATE = "I"
-    RESISTANT = "R"
-
-class ProcessedDataSchema:
-    FEATURE_COLUMNS = ['year', 'country', 'age_group', 'sex', ...]
-    TARGET_COLUMN = 'mic_log2'
-```
-
-### `loader.py`
-Load and join BVBRC data:
-```python
-loader = BVBRCDataLoader(data_dir)
-amr_df = loader.load_amr_data("Klebsiella pneumoniae")
-isolates_df = loader.load_isolate_data("Klebsiella pneumoniae")
-joined = loader.join_amr_isolates(amr_df, isolates_df)
-```
-
-### `preprocessor.py`
-MIC data cleaning and transformation:
-```python
-# Parse censored MIC strings
-value, op = MICPreprocessor.parse_censored_mic(">8")
-
-# Log₂-transform
-log2_val = MICPreprocessor.log2_transform_mic(value)
-
-# Extract country and year
-country = MICPreprocessor.parse_location_to_country("USA:CA")
-year = MICPreprocessor.extract_year_from_date("2020-10-21T03:02:19Z")
-
-# End-to-end pipeline
-cleaned = MICPreprocessor.clean_mic_dataframe(df, antibiotic="Meropenem")
-```
-
----
-
-## 📖 References & Further Reading
-
-- **CLAUDE.md** — Full technical specification (in this repo)
-- **Vivli AMR Register** — Data source (https://www.vivli.org/)
-- **BVBRC (Bacterial & Viral Bioinformatics Resource Center)** — Genome annotations (https://www.bvbrc.org/)
-- **EUCAST & CLSI Breakpoints** — Resistance definitions (for validation)
-- **SHAP Documentation** — Model explainability (https://shap.readthedocs.io/)
-
----
-
-## 👥 Contributing
-
-This is a proof-of-concept project for a Ukrainian national science grant application (INSCIENCE). Contributions are welcome:
-
-1. **Data cleaning** — Improve MIC parsing, handle edge cases
-2. **Feature engineering** — Develop demographic/specimen proxies
-3. **Model optimization** — Test alternative algorithms (LightGBM, CatBoost)
-4. **Visualization** — Improve SHAP plots, dashboard UX
-5. **Documentation** — Expand methodology section
-
----
-
-## ⚖️ License & Data Use Agreement
-
-- **Code**: [Specify license — e.g., MIT, Apache 2.0]
-- **Data**: Vivli AMR Register (Data Use Agreement required)
-  - Raw data must NOT be redistributed
-  - Aggregated outputs only
-  - Challenge rules compliance mandatory
-
----
-
-## 🤝 Support & Contact
-
-For questions:
-- Check CLAUDE.md for technical details
-- Review notebook comments for workflow examples
-- Refer to docstrings in `src/data/` modules
-
----
-
-**Last Updated**: May 4, 2026  
-**Status**: Proof-of-Concept (PoC) — Awaiting ATLAS/SENTRY data
+- **Code**: MIT
+- **Data**: Vivli AMR Register — Data Use Agreement required. Raw data must not be redistributed.
