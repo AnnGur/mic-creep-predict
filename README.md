@@ -44,6 +44,7 @@ mic-creep-predict/
 │   ├── 1_run_atlas_eda.py            # EDA -> 9 charts in reports/
 │   ├── 2_run_feature_engineering.py  # Build feature matrix -> data/processed/
 │   ├── 3_run_model_training.py       # Train RF + XGBoost -> models/ + reports/
+│   ├── 4_run_export.py               # Aggregate predictions -> reports/api_*.json
 │   └── run_paediatric_diagnostic.py  # Diagnostic for paediatric MIC_90 anomaly
 │
 ├── src/
@@ -52,8 +53,10 @@ mic-creep-predict/
 │   │   └── preprocessor.py          # MIC parsing: ">8"->16, "<=0.06"->0.03, log2
 │   ├── features/
 │   │   └── engineer.py              # build_features(), time_split(), run_pipeline()
-│   └── models/
-│       └── __init__.py
+│   ├── models/
+│   │   └── __init__.py
+│   └── api/
+│       └── main.py                  # FastAPI app — predictions + aggregated data
 │
 ├── notebooks/
 │   ├── 04_atlas_eda.ipynb
@@ -70,6 +73,10 @@ mic-creep-predict/
     ├── atlas_eda_analysis.md         # Full EDA writeup
     ├── model_results.md              # Model evaluation report
     ├── model_findings.md             # Summary for stakeholders
+    ├── api_mic90_trend.json          # MIC90 by year (served by API)
+    ├── api_country_stats.json        # Resistance by country (served by API)
+    ├── api_shap_importance.json      # Top SHAP features (served by API)
+    ├── api_censoring_lookup.json     # Year -> censoring rate (used by /predict)
     └── *.png                         # Charts
 ```
 
@@ -111,6 +118,13 @@ Run scripts in order from the project root:
 
 # Full run (RF + XGBoost + Optuna tuning, ~10 min):
 .venv/bin/python scripts/3_run_model_training.py --n-trials 40
+
+# Step 4 — Export aggregated data for API and frontend (~2 min)
+.venv/bin/python scripts/4_run_export.py
+
+# Step 5 — Start the API locally
+.venv/bin/python -m uvicorn src.api.main:app --reload --port 8000
+# Docs available at http://localhost:8000/docs
 ```
 
 All outputs go to `reports/`. Models saved to `models/`.
@@ -201,9 +215,9 @@ Raw data is **never committed**. See `.gitignore`.
 ## Next Steps
 
 - [ ] SHAP validation with domain expert (biological plausibility check)
-- [ ] FastAPI inference endpoint (`src/api/main.py`)
-- [ ] Push model artefact to Hugging Face Hub
-- [ ] Next.js dashboard for MIC trend visualisation
+- [ ] Push model artefact to Hugging Face Hub → set `MODEL_SOURCE=huggingface` on Render
+- [ ] Deploy API to Render.com (add `render.yaml`)
+- [ ] Next.js dashboard for MIC trend visualisation (consumes `/api/trend/mic90`, `/api/country-stats`)
 - [ ] SENTRY dataset integration
 - [ ] Write challenge submission
 
@@ -216,7 +230,7 @@ Raw data is **never committed**. See `.gitignore`.
 | 1-2 | Download ATLAS, filter K. pneumoniae, clean MIC formats | Done |
 | 3-4 | Feature engineering, EDA, OHE | Done |
 | 5-6 | Train RF + XGBoost, time-split validation, Optuna tuning | Done |
-| 7 | SHAP values, visualisations, domain expert validation | In progress |
+| 7 | SHAP values, API, aggregated exports, domain expert validation | In progress |
 | 8 | Package model, submission, deploy prototype | Not started |
 
 ---
