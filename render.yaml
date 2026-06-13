@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mic-creep-api
+    runtime: python
+    buildCommand: pip install -r requirements-api.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: MODEL_SOURCE
+        value: huggingface
+      - key: HF_MODEL_REPO
+        sync: false
