@@ -36,6 +36,8 @@ import sys
 import warnings
 from pathlib import Path
 
+sys.stdout.reconfigure(line_buffering=True)
+
 import matplotlib
 matplotlib.use("Agg")
 

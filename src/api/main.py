@@ -103,7 +103,7 @@ async def startup_event() -> None:
     _country_stats    = _load("api_country_stats.json")
     _shap_importance  = _load("api_shap_importance.json")
     raw_cens          = _load("api_censoring_lookup.json")
-    _censoring_lookup = {int(k): float(v) for k, v in raw_cens.items()} if isinstance(raw_cens, dict) else {}
+    _censoring_lookup = {int(float(k)): float(v) for k, v in raw_cens.items()} if isinstance(raw_cens, dict) else {}
 
 
 # ---------------------------------------------------------------------------
