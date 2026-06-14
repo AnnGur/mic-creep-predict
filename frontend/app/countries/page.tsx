@@ -63,7 +63,7 @@ export default async function CountriesPage() {
       {/* Full sortable table */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          All Countries — Sortable Table
+          All Countries - Sortable Table
         </h2>
         <p className="text-sm text-gray-500 mb-4">
           Click any column header to sort. Only countries with ≥10 isolates are shown.

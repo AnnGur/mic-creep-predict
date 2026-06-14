@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "MIC Trend" },
   { href: "/countries", label: "Countries" },
   { href: "/features", label: "Feature Importance" },
+  { href: "/predict", label: "Predict" },
 ];
 
 export default function Nav() {

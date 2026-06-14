@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MIC Creep Watch — AMR Surveillance Dashboard",
+  title: "MIC Creep Watch - AMR Surveillance Dashboard",
   description:
     "Tracking antibiotic resistance drift in Klebsiella pneumoniae (Meropenem) using ML-based MIC creep prediction. Vivli AMR Challenge 2026.",
 };
