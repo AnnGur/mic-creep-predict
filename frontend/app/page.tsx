@@ -1,9 +1,17 @@
 import MicTrendChart from "./components/MicTrendChart";
+import SpeciesSwitcher from "./components/SpeciesSwitcher";
 
 const API = "https://mic-creep-predict.onrender.com";
 
-async function getTrend() {
-  const res = await fetch(`${API}/api/trend/mic90`, { next: { revalidate: 3600 } });
+const SPECIES_LABEL: Record<string, string> = {
+  kpneumoniae: "K. pneumoniae",
+  abaumannii:  "A. baumannii",
+};
+
+async function getTrend(species: string) {
+  const res = await fetch(`${API}/api/trend/mic90?species=${species}`, {
+    next: { revalidate: 3600 },
+  });
   if (!res.ok) throw new Error("Failed to fetch trend data");
   return res.json();
 }
@@ -12,28 +20,35 @@ const LEGEND_ITEMS = [
   {
     colour: "#2563eb",
     style: "solid",
-    label: "Actual MIC₉₀ (observed)",
+    label: "Actual MICₐ (observed)",
     desc:
-      "90th-percentile MIC measured in ATLAS surveillance. The sharp rise in 2017–2018 reflects the spread of carbapenem-resistant strains (KPC, NDM, OXA) entering the dataset. The plateau at 32 mg/L is a panel ceiling artifact - ATLAS reports all values ≥32 mg/L as exactly 32.",
+      "90th-percentile MIC measured in ATLAS surveillance. The sharp rise in 2017-2018 reflects the spread of carbapenem-resistant strains entering the dataset. The plateau at 32 mg/L is a panel ceiling artifact - ATLAS reports all values >= 32 mg/L as exactly 32.",
   },
   {
     colour: "#16a34a",
     style: "dashed",
-    label: "Model predicted MIC₉₀ (2019–2022 test period)",
+    label: "Model predicted MICₐ (2019-2022 test period)",
     desc:
       "XGBoost regression predictions on held-out test years the model never saw during training. The model correctly captures the upward trajectory but underestimates the ceiling because most training isolates were susceptible.",
   },
   {
     colour: "#d97706",
     style: "dashed",
-    label: "Forecast (2023–2026, extrapolated)",
+    label: "Forecast (2023-2026, extrapolated)",
     desc:
       "Model projections beyond the available data. Treat as indicative - the real trajectory depends on emergence of new resistance mechanisms and surveillance methodology changes.",
   },
 ];
 
-export default async function Home() {
-  const trend = await getTrend();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ species?: string }>;
+}) {
+  const { species = "kpneumoniae" } = await searchParams;
+  const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
+
+  const trend = await getTrend(species);
   const forecast2026 = trend.data.find(
     (d: { year: number }) => d.year === 2026
   )?.forecast_mic90?.toFixed(1);
@@ -65,15 +80,20 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* Species switcher */}
+      <div className="mb-4">
+        <SpeciesSwitcher current={species} />
+      </div>
+
       {/* Trend chart */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          MIC&#x2090; Trend - Global, <em>K. pneumoniae</em> and <em>A. baumannii</em> + Meropenem (2004-2026)
+          MIC&#x2090; Trend - <em>{speciesLabel}</em> + Meropenem (2004-2026)
         </h2>
         <p className="text-sm text-gray-500 mb-5">
           90th-percentile MIC value by year across{" "}
           <strong>{trainYears + 4}</strong> years of ATLAS surveillance data.
-          Model trained on 2004–2018; tested on 2019–2022; forecast extends to 2026.
+          Model trained on 2004-2018; tested on 2019-2022; forecast extends to 2026.
         </p>
         <MicTrendChart data={trend.data} eucastR={trend.eucast_r_mg_l} />
       </section>
@@ -112,7 +132,7 @@ export default async function Home() {
               EUCAST resistance breakpoint - {trend.eucast_r_mg_l} mg/L
             </p>
             <p className="text-xs text-gray-500 leading-relaxed mt-0.5">
-              Isolates with MIC ≥ 8 mg/L are classified as resistant. The MIC₉₀ crossed this
+              Isolates with MIC &ge; 8 mg/L are classified as resistant. The MIC&#x2090; crossed this
               threshold around 2018 and has not returned - indicating a structural shift in
               population-level resistance, not transient fluctuation.
             </p>
@@ -125,7 +145,7 @@ export default async function Home() {
         {[
           { label: "Years of data", value: String(trend.data.length) },
           {
-            label: "Forecast MIC₉₀ (2026)",
+            label: "Forecast MICₐ (2026)",
             value: forecast2026 ? `${forecast2026} mg/L` : "-",
           },
           { label: "EUCAST breakpoint", value: `${trend.eucast_r_mg_l} mg/L` },
@@ -144,7 +164,7 @@ export default async function Home() {
       {/* Methodology note */}
       <p className="text-xs text-gray-400 leading-relaxed">
         Data source: ATLAS (Pfizer) via Vivli AMR Register · Model: XGBoost Regressor trained on
-        log₂(MIC) · EUCAST 2024 breakpoint for Meropenem vs <em>K. pneumoniae</em>: R ≥ 8 mg/L ·
+        log&#x2082;(MIC) · EUCAST 2024 breakpoint for Meropenem: R &ge; 8 mg/L ·
         Plateau at 32 mg/L reflects ATLAS panel ceiling (right-censoring), not a true biological plateau ·
         Forecast is model extrapolation beyond training period - treat as indicative only ·
         Raw patient-level data is not redistributed per Vivli data-use agreement.

@@ -1,16 +1,31 @@
 import CountryBarChart from "../components/CountryBarChart";
 import CountryTable from "../components/CountryTable";
+import SpeciesSwitcher from "../components/SpeciesSwitcher";
 
 const API = "https://mic-creep-predict.onrender.com";
 
-async function getCountryStats() {
-  const res = await fetch(`${API}/api/country-stats?min_n=10`, { next: { revalidate: 3600 } });
+const SPECIES_LABEL: Record<string, string> = {
+  kpneumoniae: "K. pneumoniae",
+  abaumannii:  "A. baumannii",
+};
+
+async function getCountryStats(species: string) {
+  const res = await fetch(`${API}/api/country-stats?min_n=10&species=${species}`, {
+    next: { revalidate: 3600 },
+  });
   if (!res.ok) throw new Error("Failed to fetch country stats");
   return res.json();
 }
 
-export default async function CountriesPage() {
-  const stats = await getCountryStats();
+export default async function CountriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ species?: string }>;
+}) {
+  const { species = "kpneumoniae" } = await searchParams;
+  const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
+
+  const stats = await getCountryStats(species);
   const data = stats.data;
 
   const highResistance = data.filter((d: { pct_resistant: number }) => d.pct_resistant >= 50).length;
@@ -18,7 +33,7 @@ export default async function CountriesPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Resistance by Country
         </h1>
@@ -27,9 +42,19 @@ export default async function CountriesPage() {
           <em className="font-medium text-gray-800">K. pneumoniae</em> and{" "}
           <em className="font-medium text-gray-800">A. baumannii</em> by country,
           based on ATLAS surveillance data (test period 2019-2022).
-          Resistance defined as MIC ≥ {stats.eucast_r_mg_l} mg/L (EUCAST 2024).
+          Resistance defined as MIC &ge; {stats.eucast_r_mg_l} mg/L (EUCAST 2024).
         </p>
       </div>
+
+      {/* Species switcher */}
+      <div className="mb-6">
+        <SpeciesSwitcher current={species} />
+      </div>
+
+      {/* Active species label */}
+      <p className="text-sm text-gray-500 mb-4">
+        Showing data for <em className="font-medium text-gray-700">{speciesLabel}</em>
+      </p>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -52,8 +77,8 @@ export default async function CountriesPage() {
           Top 20 Countries by Resistance Rate
         </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Colour coding: <span className="text-red-600 font-medium">red ≥50%</span> ·{" "}
-          <span className="text-orange-500 font-medium">orange ≥20%</span> ·{" "}
+          Colour coding: <span className="text-red-600 font-medium">red &ge;50%</span> ·{" "}
+          <span className="text-orange-500 font-medium">orange &ge;20%</span> ·{" "}
           <span className="text-blue-600 font-medium">blue &lt;20%</span>.
           Dashed line marks 50% resistance threshold.
         </p>
@@ -66,14 +91,14 @@ export default async function CountriesPage() {
           All Countries - Sortable Table
         </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Click any column header to sort. Only countries with ≥10 isolates are shown.
+          Click any column header to sort. Only countries with &ge;10 isolates are shown.
         </p>
         <CountryTable data={data} />
       </section>
 
       <p className="text-xs text-gray-400 leading-relaxed">
-        Data source: ATLAS (Pfizer) via Vivli AMR Register · Test period: 2019-2022 ·
-        Min isolates per country: 10 · EUCAST breakpoint: R ≥ {stats.eucast_r_mg_l} mg/L ·
+        Data source: ATLAS (Pfizer) via Vivli AMR Register · Species: {speciesLabel} · Test period: 2019-2022 ·
+        Min isolates per country: 10 · EUCAST breakpoint: R &ge; {stats.eucast_r_mg_l} mg/L ·
         Raw patient-level data is not redistributed per Vivli data-use agreement.
       </p>
     </main>

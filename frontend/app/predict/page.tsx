@@ -1,20 +1,35 @@
 import PredictForm from "../components/PredictForm";
+import SpeciesSwitcher from "../components/SpeciesSwitcher";
 
 const API = "https://mic-creep-predict.onrender.com";
 
-async function getCountries() {
-  const res = await fetch(`${API}/api/countries`, { next: { revalidate: 86400 } });
+const SPECIES_LABEL: Record<string, string> = {
+  kpneumoniae: "K. pneumoniae",
+  abaumannii:  "A. baumannii",
+};
+
+async function getCountries(species: string) {
+  const res = await fetch(`${API}/api/countries?species=${species}`, {
+    next: { revalidate: 86400 },
+  });
   if (!res.ok) throw new Error("Failed to fetch countries");
   const data = await res.json();
   return data.countries as string[];
 }
 
-export default async function PredictPage() {
-  const countries = await getCountries();
+export default async function PredictPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ species?: string }>;
+}) {
+  const { species = "kpneumoniae" } = await searchParams;
+  const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
+
+  const countries = await getCountries(species);
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           MIC Predictor
         </h1>
@@ -29,7 +44,16 @@ export default async function PredictPage() {
         </div>
       </div>
 
-      <PredictForm countries={countries} />
+      {/* Species switcher */}
+      <div className="mb-6">
+        <SpeciesSwitcher current={species} />
+      </div>
+
+      <p className="text-sm text-gray-500 mb-4">
+        Predicting for <em className="font-medium text-gray-700">{speciesLabel}</em>
+      </p>
+
+      <PredictForm countries={countries} species={species} />
 
       {/* EUCAST breakpoints reference */}
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -49,13 +73,13 @@ export default async function PredictPage() {
             <tr>
               <td className="py-2 pr-4 font-medium text-green-700">Susceptible</td>
               <td className="py-2 pr-4 font-mono text-gray-700">S</td>
-              <td className="py-2 pr-4 text-gray-600">MIC ≤ 2 mg/L</td>
+              <td className="py-2 pr-4 text-gray-600">MIC &le; 2 mg/L</td>
               <td className="py-2 text-gray-600">Standard dosing achieves effective concentrations.</td>
             </tr>
             <tr>
               <td className="py-2 pr-4 font-medium text-orange-600">Susceptible, Increased Exposure</td>
               <td className="py-2 pr-4 font-mono text-gray-700">I</td>
-              <td className="py-2 pr-4 text-gray-600">MIC &gt; 2 and ≤ 8 mg/L</td>
+              <td className="py-2 pr-4 text-gray-600">MIC &gt; 2 and &le; 8 mg/L</td>
               <td className="py-2 text-gray-600">Higher doses or extended infusion required. Not a treatment failure - a dosing challenge.</td>
             </tr>
             <tr>

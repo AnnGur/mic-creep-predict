@@ -28,7 +28,7 @@ const INTERP_STYLE = {
   susceptible:   { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-700",  badge: "bg-green-100 text-green-800" },
 };
 
-export default function PredictForm({ countries }: { countries: string[] }) {
+export default function PredictForm({ countries, species = "kpneumoniae" }: { countries: string[]; species?: string }) {
   const [year, setYear]             = useState(2024);
   const [country, setCountry]       = useState("Ukraine");
   const [sex, setSex]               = useState("Male");
@@ -56,6 +56,7 @@ export default function PredictForm({ countries }: { countries: string[] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          species,
           year,
           country,
           sex,
