@@ -54,8 +54,12 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 warnings.filterwarnings("ignore", category=FutureWarning)
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
+SPECIES_MAP = {
+    "kpneumoniae": "Klebsiella pneumoniae",
+    "abaumannii":  "Acinetobacter baumannii",
+}
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR     = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR   = PROJECT_ROOT / "models"
 REPORTS      = PROJECT_ROOT / "reports"
 
@@ -74,11 +78,11 @@ plt.rcParams.update({"figure.dpi": 120, "figure.figsize": (13, 5)})
 # Load
 # ---------------------------------------------------------------------------
 
-def load_data() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
-    X_train = pd.read_parquet(DATA_DIR / "X_train.parquet")
-    y_train = pd.read_parquet(DATA_DIR / "y_train.parquet").squeeze()
-    X_test  = pd.read_parquet(DATA_DIR / "X_test.parquet")
-    y_test  = pd.read_parquet(DATA_DIR / "y_test.parquet").squeeze()
+def load_data(data_dir: Path) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+    X_train = pd.read_parquet(data_dir / "X_train.parquet")
+    y_train = pd.read_parquet(data_dir / "y_train.parquet").squeeze()
+    X_test  = pd.read_parquet(data_dir / "X_test.parquet")
+    y_test  = pd.read_parquet(data_dir / "y_test.parquet").squeeze()
 
     # Align columns (test may miss country dummies if some appeared only in train)
     X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
@@ -117,7 +121,7 @@ def compute_metrics(y_true: pd.Series, y_pred: np.ndarray, label: str) -> dict:
 # Random Forest baseline
 # ---------------------------------------------------------------------------
 
-def train_rf(X_train, y_train) -> RandomForestRegressor:
+def train_rf(X_train, y_train, model_suffix: str = "") -> RandomForestRegressor:
     print("  Fitting Random Forest baseline (200 trees, default params)...")
     rf = RandomForestRegressor(
         n_estimators=200,
@@ -127,8 +131,9 @@ def train_rf(X_train, y_train) -> RandomForestRegressor:
         n_jobs=-1,
     )
     rf.fit(X_train, y_train)
-    joblib.dump(rf, MODELS_DIR / "rf_baseline.pkl")
-    print("  Saved -> models/rf_baseline.pkl")
+    fname = f"rf_baseline{model_suffix}.pkl"
+    joblib.dump(rf, MODELS_DIR / fname)
+    print(f"  Saved -> models/{fname}")
     return rf
 
 
@@ -136,7 +141,7 @@ def train_rf(X_train, y_train) -> RandomForestRegressor:
 # XGBoost + Optuna
 # ---------------------------------------------------------------------------
 
-def tune_xgb(X_train, y_train, n_trials: int) -> xgb.XGBRegressor:
+def tune_xgb(X_train, y_train, n_trials: int, model_suffix: str = "") -> xgb.XGBRegressor:
     # Resistant isolates get 3x weight so the model doesn't ignore the tail
     sample_weight = np.where(y_train >= LOG2_R, 3.0, 1.0)
 
@@ -181,10 +186,12 @@ def tune_xgb(X_train, y_train, n_trials: int) -> xgb.XGBRegressor:
     xgb_best = xgb.XGBRegressor(**best, tree_method="hist",
                                  random_state=RANDOM_STATE, n_jobs=-1)
     xgb_best.fit(X_train, y_train, sample_weight=sample_weight)
-    joblib.dump(xgb_best, MODELS_DIR / "xgb_tuned.pkl")
-    print("  Saved -> models/xgb_tuned.pkl")
+    model_fname  = f"xgb_tuned{model_suffix}.pkl"
+    params_fname = f"xgb_best_params{model_suffix}.json"
+    joblib.dump(xgb_best, MODELS_DIR / model_fname)
+    print(f"  Saved -> models/{model_fname}")
 
-    with open(MODELS_DIR / "xgb_best_params.json", "w") as f:
+    with open(MODELS_DIR / params_fname, "w") as f:
         json.dump(best, f, indent=2)
 
     return xgb_best
@@ -336,9 +343,9 @@ def plot_shap(model: xgb.XGBRegressor, X_test: pd.DataFrame) -> None:
 # Markdown report
 # ---------------------------------------------------------------------------
 
-def write_report(results: list[dict], xgb_params: dict) -> None:
+def write_report(results: list[dict], xgb_params: dict, species_label: str = "K. pneumoniae", report_suffix: str = "") -> None:
     lines = [
-        "# Model Training Results — K. pneumoniae + Meropenem\n",
+        f"# Model Training Results — {species_label} + Meropenem\n",
         f"**Generated**: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}\n",
         "---\n",
         "## Evaluation Metrics\n",
@@ -381,9 +388,9 @@ def write_report(results: list[dict], xgb_params: dict) -> None:
         "- Prepare submission write-up\n",
     ]
 
-    out = REPORTS / "model_results.md"
+    out = REPORTS / f"model_results{report_suffix}.md"
     out.write_text("".join(lines))
-    print(f"  -> reports/model_results.md")
+    print(f"  -> reports/model_results{report_suffix}.md")
 
 
 # ---------------------------------------------------------------------------
@@ -396,6 +403,8 @@ def parse_args():
                    help="Run RF baseline only — skip XGBoost Optuna tuning")
     p.add_argument("--n-trials", type=int, default=N_TRIALS_DEFAULT,
                    help=f"Optuna trial count (default: {N_TRIALS_DEFAULT})")
+    p.add_argument("--species", choices=list(SPECIES_MAP), default="kpneumoniae",
+                   help="Target species (default: kpneumoniae)")
     return p.parse_args()
 
 
@@ -403,32 +412,39 @@ def main() -> None:
     args = parse_args()
     n = 5 if args.skip_optuna else 6
 
-    print(f"[1/{n}] Load processed data")
-    X_train, y_train, X_test, y_test = load_data()
+    species_label  = SPECIES_MAP[args.species].replace("Klebsiella", "K.").replace("Acinetobacter", "A.")
+    model_suffix   = f"_{args.species}"
+    report_suffix  = model_suffix
+    # K. pneumoniae reads from the top-level processed dir; A. baumannii from its subdir
+    data_dir = PROJECT_ROOT / "data" / "processed" if args.species == "kpneumoniae" \
+               else PROJECT_ROOT / "data" / "processed" / args.species
 
-    # Save feature names once for the API to load
-    with open(MODELS_DIR / "feature_names.json", "w") as f:
+    print(f"[1/{n}] Load processed data  [{species_label}]")
+    X_train, y_train, X_test, y_test = load_data(data_dir)
+
+    # Save feature names for the API to load
+    feature_names_fname = f"feature_names{model_suffix}.json"
+    with open(MODELS_DIR / feature_names_fname, "w") as f:
         json.dump(list(X_train.columns), f)
 
     print(f"\n[2/{n}] Random Forest baseline")
-    rf = train_rf(X_train, y_train)
+    rf = train_rf(X_train, y_train, model_suffix=model_suffix)
     rf_pred  = rf.predict(X_test)
     rf_metrics = compute_metrics(y_test, rf_pred, "RF baseline")
 
     if args.skip_optuna:
         print("\n  --skip-optuna set: skipping XGBoost tuning.")
-        print("\n  Saving dummy XGBoost (same as RF predictions for reports)...")
-        xgb_model  = rf          # placeholder so plots still render
+        xgb_model  = rf
         xgb_pred   = rf_pred
         xgb_metrics = rf_metrics
         xgb_params  = {}
         results     = [rf_metrics]
     else:
         print(f"\n[3/{n}] XGBoost + Optuna ({args.n_trials} trials)")
-        xgb_model  = tune_xgb(X_train, y_train, n_trials=args.n_trials)
+        xgb_model  = tune_xgb(X_train, y_train, n_trials=args.n_trials, model_suffix=model_suffix)
         xgb_pred   = xgb_model.predict(X_test)
         xgb_metrics = compute_metrics(y_test, xgb_pred, "XGBoost tuned")
-        with open(MODELS_DIR / "xgb_best_params.json") as f:
+        with open(MODELS_DIR / f"xgb_best_params{model_suffix}.json") as f:
             xgb_params = json.load(f)
         results = [rf_metrics, xgb_metrics]
 
@@ -444,7 +460,7 @@ def main() -> None:
         plot_shap(xgb_model, X_test)
 
     print(f"\n[{n}/{n}] Write report")
-    write_report(results, xgb_params)
+    write_report(results, xgb_params, species_label=species_label, report_suffix=report_suffix)
 
     print(f"\nDone. Models -> {MODELS_DIR}  Reports -> {REPORTS}")
 

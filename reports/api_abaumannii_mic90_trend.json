@@ -1,0 +1,190 @@
+[
+  {
+    "year": 2004,
+    "actual_mic90": 5.6569,
+    "actual_mic50": 1.4142,
+    "pct_resistant": 16.67,
+    "n": 6,
+    "source": "train_actual"
+  },
+  {
+    "year": 2005,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 59.46,
+    "n": 37,
+    "source": "train_actual"
+  },
+  {
+    "year": 2006,
+    "actual_mic90": 32.0,
+    "actual_mic50": 2.0,
+    "pct_resistant": 40.94,
+    "n": 767,
+    "source": "train_actual"
+  },
+  {
+    "year": 2007,
+    "actual_mic90": 32.0,
+    "actual_mic50": 2.0,
+    "pct_resistant": 38.99,
+    "n": 2365,
+    "source": "train_actual"
+  },
+  {
+    "year": 2008,
+    "actual_mic90": 32.0,
+    "actual_mic50": 2.0,
+    "pct_resistant": 44.31,
+    "n": 2374,
+    "source": "train_actual"
+  },
+  {
+    "year": 2009,
+    "actual_mic90": 32.0,
+    "actual_mic50": 4.0,
+    "pct_resistant": 46.61,
+    "n": 2746,
+    "source": "train_actual"
+  },
+  {
+    "year": 2010,
+    "actual_mic90": 32.0,
+    "actual_mic50": 4.0,
+    "pct_resistant": 49.56,
+    "n": 2149,
+    "source": "train_actual"
+  },
+  {
+    "year": 2011,
+    "actual_mic90": 32.0,
+    "actual_mic50": 1.0,
+    "pct_resistant": 44.27,
+    "n": 1466,
+    "source": "train_actual"
+  },
+  {
+    "year": 2012,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 62.45,
+    "n": 1643,
+    "source": "train_actual"
+  },
+  {
+    "year": 2013,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 64.04,
+    "n": 1891,
+    "source": "train_actual"
+  },
+  {
+    "year": 2014,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 65.8,
+    "n": 2196,
+    "source": "train_actual"
+  },
+  {
+    "year": 2015,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 65.98,
+    "n": 1843,
+    "source": "train_actual"
+  },
+  {
+    "year": 2016,
+    "actual_mic90": 32.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 64.79,
+    "n": 1738,
+    "source": "train_actual"
+  },
+  {
+    "year": 2017,
+    "actual_mic90": 32.0,
+    "actual_mic50": 32.0,
+    "pct_resistant": 57.06,
+    "n": 885,
+    "source": "train_actual"
+  },
+  {
+    "year": 2018,
+    "actual_mic90": 32.0,
+    "actual_mic50": 32.0,
+    "pct_resistant": 69.43,
+    "n": 1897,
+    "source": "train_actual"
+  },
+  {
+    "year": 2019,
+    "actual_mic90": 32.0,
+    "predicted_mic90": 31.8021,
+    "actual_mic50": 32.0,
+    "predicted_mic50": 29.1046,
+    "pct_resistant": 69.95,
+    "pct_resistant_pred": 67.41,
+    "n": 3621,
+    "source": "test_actual_and_predicted"
+  },
+  {
+    "year": 2020,
+    "actual_mic90": 32.0,
+    "predicted_mic90": 31.0655,
+    "actual_mic50": 32.0,
+    "predicted_mic50": 28.261,
+    "pct_resistant": 69.45,
+    "pct_resistant_pred": 66.7,
+    "n": 3264,
+    "source": "test_actual_and_predicted"
+  },
+  {
+    "year": 2021,
+    "actual_mic90": 32.0,
+    "predicted_mic90": 32.0865,
+    "actual_mic50": 32.0,
+    "predicted_mic50": 29.3794,
+    "pct_resistant": 71.22,
+    "pct_resistant_pred": 68.94,
+    "n": 3503,
+    "source": "test_actual_and_predicted"
+  },
+  {
+    "year": 2022,
+    "actual_mic90": 32.0,
+    "predicted_mic90": 31.2948,
+    "actual_mic50": 32.0,
+    "predicted_mic50": 28.3889,
+    "pct_resistant": 67.32,
+    "pct_resistant_pred": 64.81,
+    "n": 3149,
+    "source": "test_actual_and_predicted"
+  },
+  {
+    "year": 2023,
+    "forecast_mic90": 34.5317,
+    "forecast_log2_mic90": 5.1099,
+    "source": "forecast_extrapolated"
+  },
+  {
+    "year": 2024,
+    "forecast_mic90": 38.1035,
+    "forecast_log2_mic90": 5.2519,
+    "source": "forecast_extrapolated"
+  },
+  {
+    "year": 2025,
+    "forecast_mic90": 42.0447,
+    "forecast_log2_mic90": 5.3939,
+    "source": "forecast_extrapolated"
+  },
+  {
+    "year": 2026,
+    "forecast_mic90": 46.3935,
+    "forecast_log2_mic90": 5.5359,
+    "source": "forecast_extrapolated"
+  }
+]

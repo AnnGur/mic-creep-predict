@@ -42,7 +42,10 @@ from features.engineer import (
     time_split,
 )
 
-SPECIES    = "Klebsiella pneumoniae"
+SPECIES_MAP = {
+    "kpneumoniae": "Klebsiella pneumoniae",
+    "abaumannii":  "Acinetobacter baumannii",
+}
 ANTIBIOTIC = "Meropenem"
 EUCAST_R   = 8
 
@@ -62,9 +65,9 @@ plt.rcParams.update({"figure.figsize": (12, 5), "figure.dpi": 100})
 # Data loading (same as EDA — reused so both scripts share identical parsing)
 # ---------------------------------------------------------------------------
 
-def load_and_parse(data_dir: Path) -> pd.DataFrame:
+def load_and_parse(data_dir: Path, species: str) -> pd.DataFrame:
     loader = ATLASLoader(data_dir)
-    df = loader.load(SPECIES, antibiotic=ANTIBIOTIC)
+    df = loader.load(species, antibiotic=ANTIBIOTIC)
 
     parsed = df[ANTIBIOTIC].apply(
         lambda x: MICPreprocessor.parse_censored_mic(x) if pd.notna(x) else (None, None)
@@ -227,12 +230,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--out", type=Path,
         default=PROJECT_ROOT / "data" / "processed",
-        help="Output directory for parquet files (default: data/processed/)",
+        help="Base output directory for parquet files (default: data/processed/)",
     )
     parser.add_argument(
         "--reports", type=Path,
         default=PROJECT_ROOT / "reports",
         help="Output directory for diagnostic charts (default: reports/)",
+    )
+    parser.add_argument(
+        "--species", choices=list(SPECIES_MAP), default="kpneumoniae",
+        help="Target species (default: kpneumoniae)",
     )
     return parser.parse_args()
 
@@ -242,9 +249,15 @@ def main() -> None:
     args.reports.mkdir(parents=True, exist_ok=True)
     n = 6
 
-    print(f"[1/{n}] Load & parse ATLAS data")
+    species_name = SPECIES_MAP[args.species]
+    # K. pneumoniae keeps the existing top-level path for backward compat;
+    # A. baumannii goes into a species-named subdirectory.
+    out_dir = args.out if args.species == "kpneumoniae" else args.out / args.species
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"[1/{n}] Load & parse ATLAS data  [{species_name}]")
     global df
-    df = load_and_parse(args.data_dir)
+    df = load_and_parse(args.data_dir, species_name)
 
     print(f"\n[2/{n}] Specimen type mapping")
     print_specimen_mapping(df)
@@ -266,8 +279,8 @@ def main() -> None:
     print(f"\n[6/{n}] Feature correlation heatmap")
     plot_correlation_heatmap(X_train, y_train, args.reports)
 
-    print(f"\nSaving processed data to: {args.out}")
-    run_pipeline(df, args.out)
+    print(f"\nSaving processed data to: {out_dir}")
+    run_pipeline(df, out_dir)
 
     print("\nDone.")
 

@@ -30,10 +30,14 @@ import joblib
 import numpy as np
 import pandas as pd
 
+SPECIES_MAP = {
+    "kpneumoniae": "Klebsiella pneumoniae",
+    "abaumannii":  "Acinetobacter baumannii",
+}
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-DATA_DIR   = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 REPORTS    = PROJECT_ROOT / "reports"
 REPORTS.mkdir(exist_ok=True)
@@ -42,17 +46,19 @@ EUCAST_R         = 8
 LOG2_R           = np.log2(EUCAST_R)
 CREEP_SLOPE_LOG2 = 0.142   # +1.97 mg/L/yr ≈ +0.142 log2/yr at midpoint MIC
 
+_json_suffix = ""  # set in main() based on --species arg; used by export helpers
 
-def load() -> tuple:
+
+def load(data_dir: Path, model_suffix: str) -> tuple:
     print("  Loading parquets and model...")
-    X_train = pd.read_parquet(DATA_DIR / "X_train.parquet")
-    y_train = pd.read_parquet(DATA_DIR / "y_train.parquet").squeeze()
-    X_test  = pd.read_parquet(DATA_DIR / "X_test.parquet")
-    y_test  = pd.read_parquet(DATA_DIR / "y_test.parquet").squeeze()
+    X_train = pd.read_parquet(data_dir / "X_train.parquet")
+    y_train = pd.read_parquet(data_dir / "y_train.parquet").squeeze()
+    X_test  = pd.read_parquet(data_dir / "X_test.parquet")
+    y_test  = pd.read_parquet(data_dir / "y_test.parquet").squeeze()
     X_test  = X_test.reindex(columns=X_train.columns, fill_value=0)
 
-    model         = joblib.load(MODELS_DIR / "xgb_tuned.pkl")
-    feature_names = json.loads((MODELS_DIR / "feature_names.json").read_text())
+    model         = joblib.load(MODELS_DIR / f"xgb_tuned{model_suffix}.pkl")
+    feature_names = json.loads((MODELS_DIR / f"feature_names{model_suffix}.json").read_text())
 
     return X_train, y_train, X_test, y_test, model, feature_names
 
@@ -105,8 +111,9 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model) -> None:
         }
 
     out = sorted(records.values(), key=lambda r: r["year"])
-    (REPORTS / "api_mic90_trend.json").write_text(json.dumps(out, indent=2))
-    print(f"  -> reports/api_mic90_trend.json  ({len(out)} years)")
+    fname = f"api{_json_suffix}_mic90_trend.json"
+    (REPORTS / fname).write_text(json.dumps(out, indent=2))
+    print(f"  -> reports/{fname}  ({len(out)} years)")
 
 
 # ---------------------------------------------------------------------------
@@ -138,8 +145,9 @@ def export_country_stats(X_test, y_test, model) -> None:
         })
 
     records.sort(key=lambda r: r["pct_resistant"], reverse=True)
-    (REPORTS / "api_country_stats.json").write_text(json.dumps(records, indent=2))
-    print(f"  -> reports/api_country_stats.json  ({len(records)} countries)")
+    fname = f"api{_json_suffix}_country_stats.json"
+    (REPORTS / fname).write_text(json.dumps(records, indent=2))
+    print(f"  -> reports/{fname}  ({len(records)} countries)")
 
 
 # ---------------------------------------------------------------------------
@@ -155,8 +163,9 @@ def export_censoring_lookup(X_train, X_test) -> None:
     for yr in range(2023, 2031):
         lookup[yr] = last_val
     out = {str(k): v for k, v in sorted(lookup.items())}
-    (REPORTS / "api_censoring_lookup.json").write_text(json.dumps(out, indent=2))
-    print(f"  -> reports/api_censoring_lookup.json  ({len(out)} years)")
+    fname = f"api{_json_suffix}_censoring_lookup.json"
+    (REPORTS / fname).write_text(json.dumps(out, indent=2))
+    print(f"  -> reports/{fname}  ({len(out)} years)")
 
 
 # ---------------------------------------------------------------------------
@@ -186,8 +195,9 @@ def export_shap_importance(model, X_test, feature_names: list) -> None:
         }
         for i, idx in enumerate(top_idx)
     ]
-    (REPORTS / "api_shap_importance.json").write_text(json.dumps(records, indent=2))
-    print(f"  -> reports/api_shap_importance.json  (top 20 features)")
+    fname = f"api{_json_suffix}_shap_importance.json"
+    (REPORTS / fname).write_text(json.dumps(records, indent=2))
+    print(f"  -> reports/{fname}  (top 20 features)")
 
 
 def _shap_note(feature: str) -> str:
@@ -218,6 +228,8 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--skip-shap", action="store_true",
                    help="Skip SHAP importance export (avoids slow IPython import)")
+    p.add_argument("--species", choices=list(SPECIES_MAP), default="kpneumoniae",
+                   help="Target species (default: kpneumoniae)")
     return p.parse_args()
 
 
@@ -225,8 +237,16 @@ def main() -> None:
     args = parse_args()
     n = 3 if args.skip_shap else 4
 
-    print(f"[1/{n}] Load data and model")
-    X_train, y_train, X_test, y_test, model, feature_names = load()
+    model_suffix = f"_{args.species}"
+    data_dir = PROJECT_ROOT / "data" / "processed" if args.species == "kpneumoniae" \
+               else PROJECT_ROOT / "data" / "processed" / args.species
+
+    # Module-level sentinel used by json save helpers — set before calling them
+    global _json_suffix
+    _json_suffix = f"_{args.species}"
+
+    print(f"[1/{n}] Load data and model  [{SPECIES_MAP[args.species]}]")
+    X_train, y_train, X_test, y_test, model, feature_names = load(data_dir, model_suffix)
     print(f"  Train: {len(X_train):,} rows  Test: {len(X_test):,} rows")
 
     print(f"\n[2/{n}] MIC90 trend (actual + predicted + forecast)")
