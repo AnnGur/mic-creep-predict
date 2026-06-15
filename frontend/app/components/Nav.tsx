@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/countries", label: "Countries" },
   { href: "/features", label: "Feature Importance" },
   { href: "/predict", label: "Predict" },
+  { href: "/methodology", label: "Methodology" },
 ];
 
 export default function Nav() {
