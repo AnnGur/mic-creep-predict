@@ -108,17 +108,20 @@ async def startup_event() -> None:
         model_path    = MODELS_DIR / model_fname
         features_path = MODELS_DIR / features_fname
 
-        if not model_path.exists():
-            print(f"  [{species}] model not found — skipping ({model_path})")
-            continue
-
         if MODEL_SOURCE == "huggingface" and HF_REPO:
             from huggingface_hub import hf_hub_download
-            pkl_path  = hf_hub_download(repo_id=HF_REPO, filename=model_fname)
-            json_path = hf_hub_download(repo_id=HF_REPO, filename=features_fname)
+            try:
+                pkl_path  = hf_hub_download(repo_id=HF_REPO, filename=model_fname)
+                json_path = hf_hub_download(repo_id=HF_REPO, filename=features_fname)
+            except Exception as exc:
+                print(f"  [{species}] HF download failed — skipping: {exc}")
+                continue
             _models[species]        = joblib.load(pkl_path)
             _feature_names[species] = json.loads(Path(json_path).read_text())
         else:
+            if not model_path.exists():
+                print(f"  [{species}] model not found — skipping ({model_path})")
+                continue
             _models[species]        = joblib.load(model_path)
             _feature_names[species] = json.loads(features_path.read_text())
 
