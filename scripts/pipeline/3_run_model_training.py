@@ -8,10 +8,10 @@ Step 4: SHAP feature importance
 Step 5: Save model artefacts
 
 Inputs (from 2_run_feature_engineering.py):
-    data/processed/X_train.parquet
-    data/processed/y_train.parquet
-    data/processed/X_test.parquet
-    data/processed/y_test.parquet
+    data/processed/{species}/X_train.parquet
+    data/processed/{species}/y_train.parquet
+    data/processed/{species}/X_test.parquet
+    data/processed/{species}/y_test.parquet
 
 Outputs:
     models/rf_baseline_{species}.pkl
@@ -419,9 +419,7 @@ def main() -> None:
     species_label  = SPECIES_MAP[args.species].replace("Klebsiella", "K.").replace("Acinetobacter", "A.")
     model_suffix   = f"_{args.species}"
     report_suffix  = model_suffix
-    # K. pneumoniae reads from the top-level processed dir; A. baumannii from its subdir
-    data_dir = PROJECT_ROOT / "data" / "processed" if args.species == "kpneumoniae" \
-               else PROJECT_ROOT / "data" / "processed" / args.species
+    data_dir = PROJECT_ROOT / "data" / "processed" / args.species
 
     print(f"[1/{n}] Load processed data  [{species_label}]")
     X_train, y_train, X_test, y_test = load_data(data_dir)

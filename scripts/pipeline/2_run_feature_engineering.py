@@ -250,9 +250,7 @@ def main() -> None:
     n = 6
 
     species_name = SPECIES_MAP[args.species]
-    # K. pneumoniae keeps the existing top-level path for backward compat;
-    # A. baumannii goes into a species-named subdirectory.
-    out_dir = args.out if args.species == "kpneumoniae" else args.out / args.species
+    out_dir = args.out / args.species
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[1/{n}] Load & parse ATLAS data  [{species_name}]")

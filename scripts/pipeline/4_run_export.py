@@ -238,8 +238,7 @@ def main() -> None:
     n = 3 if args.skip_shap else 4
 
     model_suffix = f"_{args.species}"
-    data_dir = PROJECT_ROOT / "data" / "processed" if args.species == "kpneumoniae" \
-               else PROJECT_ROOT / "data" / "processed" / args.species
+    data_dir = PROJECT_ROOT / "data" / "processed" / args.species
 
     # Module-level sentinel used by json save helpers — set before calling them
     global _json_suffix
