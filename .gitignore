@@ -24,3 +24,11 @@ models/*.json
 # Presentation (generated locally, not versioned)
 *.pptx
 scripts/make_presentation.py
+
+# Local screenshots / reference images
+*.png
+!reports/**/*.png
+
+# macOS
+.DS_Store
+**/.DS_Store
