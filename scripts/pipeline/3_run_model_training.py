@@ -59,7 +59,7 @@ SPECIES_MAP = {
     "abaumannii":  "Acinetobacter baumannii",
 }
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MODELS_DIR   = PROJECT_ROOT / "models"
 REPORTS      = PROJECT_ROOT / "reports" / "model"
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from huggingface_hub import HfApi
 
 REPO_ID    = "AnnGur/mic-creep-kpneumoniae"
-MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 FILES = [
     ("xgb_tuned_kpneumoniae.pkl",    "xgb_tuned_kpneumoniae.pkl"),

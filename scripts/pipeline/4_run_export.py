@@ -35,7 +35,7 @@ SPECIES_MAP = {
     "abaumannii":  "Acinetobacter baumannii",
 }
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 MODELS_DIR = PROJECT_ROOT / "models"

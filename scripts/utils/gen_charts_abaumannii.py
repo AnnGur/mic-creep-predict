@@ -17,7 +17,7 @@ import matplotlib.ticker as ticker
 import pandas as pd
 from pathlib import Path
 
-ROOT    = Path(__file__).resolve().parent.parent
+ROOT    = Path(__file__).resolve().parent.parent.parent
 REPORTS = ROOT / "reports" / "eda"
 API_DIR = ROOT / "reports" / "api"
 DATA    = ROOT / "data" / "processed" / "abaumannii"

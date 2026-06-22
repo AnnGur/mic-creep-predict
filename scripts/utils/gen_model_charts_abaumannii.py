@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-ROOT    = Path(__file__).resolve().parent.parent
+ROOT    = Path(__file__).resolve().parent.parent.parent
 REPORTS = ROOT / "reports" / "model"
 MODELS  = ROOT / "models"
 REPORTS.mkdir(parents=True, exist_ok=True)
