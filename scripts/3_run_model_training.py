@@ -14,15 +14,15 @@ Inputs (from 2_run_feature_engineering.py):
     data/processed/y_test.parquet
 
 Outputs:
-    models/rf_baseline.pkl
-    models/xgb_tuned.pkl
-    models/feature_names.json
-    reports/model_results.md
-    reports/shap_summary.png
-    reports/shap_beeswarm.png
-    reports/mic90_trend_predicted.png
-    reports/residuals_by_year.png
-    reports/rmse_by_year.png
+    models/rf_baseline_{species}.pkl
+    models/xgb_tuned_{species}.pkl
+    models/feature_names_{species}.json
+    reports/model/model_results_{species}.md
+    reports/model/shap_summary_{species}.png
+    reports/model/shap_beeswarm_{species}.png
+    reports/model/mic90_trend_predicted.png
+    reports/model/residuals_by_year_{species}.png
+    reports/model/rmse_by_year_{species}.png
 
 Run:
     .venv/bin/python scripts/3_run_model_training.py
@@ -61,10 +61,10 @@ SPECIES_MAP = {
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR   = PROJECT_ROOT / "models"
-REPORTS      = PROJECT_ROOT / "reports"
+REPORTS      = PROJECT_ROOT / "reports" / "model"
 
 MODELS_DIR.mkdir(exist_ok=True)
-REPORTS.mkdir(exist_ok=True)
+REPORTS.mkdir(parents=True, exist_ok=True)
 
 EUCAST_R      = 8          # mg/L resistance breakpoint
 LOG2_R        = np.log2(EUCAST_R)   # = 3.0 in log2 space
@@ -240,7 +240,7 @@ def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred) -> None:
 # Residuals by year
 # ---------------------------------------------------------------------------
 
-def plot_residuals(X_test, y_test, xgb_pred) -> None:
+def plot_residuals(X_test, y_test, xgb_pred, model_suffix: str = "") -> None:
     df = X_test[["year"]].copy()
     df["residual"] = y_test.values - xgb_pred
 
@@ -256,16 +256,17 @@ def plot_residuals(X_test, y_test, xgb_pred) -> None:
     ax.set_title("XGBoost residuals by year — Test set", fontsize=12, fontweight="bold")
     ax.legend(fontsize=9)
     plt.tight_layout()
-    fig.savefig(REPORTS / "residuals_by_year.png", dpi=150, bbox_inches="tight")
+    fname = f"residuals_by_year{model_suffix}.png"
+    fig.savefig(REPORTS / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("  -> reports/residuals_by_year.png")
+    print(f"  -> reports/{fname}")
 
 
 # ---------------------------------------------------------------------------
 # RMSE by year
 # ---------------------------------------------------------------------------
 
-def plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred) -> None:
+def plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix: str = "") -> None:
     df = X_test[["year"]].copy()
     df["actual"]   = y_test.values
     df["rf_pred"]  = rf_pred
@@ -293,16 +294,17 @@ def plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred) -> None:
                  fontsize=12, fontweight="bold")
     ax.legend(fontsize=9)
     plt.tight_layout()
-    fig.savefig(REPORTS / "rmse_by_year.png", dpi=150, bbox_inches="tight")
+    fname = f"rmse_by_year{model_suffix}.png"
+    fig.savefig(REPORTS / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("  -> reports/rmse_by_year.png")
+    print(f"  -> reports/{fname}")
 
 
 # ---------------------------------------------------------------------------
 # SHAP
 # ---------------------------------------------------------------------------
 
-def plot_shap(model: xgb.XGBRegressor, X_test: pd.DataFrame) -> None:
+def plot_shap(model: xgb.XGBRegressor, X_test: pd.DataFrame, model_suffix: str = "") -> None:
     print("  Computing SHAP values (this may take ~1 min)...")
     explainer   = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_test)
@@ -314,9 +316,10 @@ def plot_shap(model: xgb.XGBRegressor, X_test: pd.DataFrame) -> None:
     plt.title("SHAP feature importance — XGBoost tuned (test set)",
               fontsize=12, fontweight="bold")
     plt.tight_layout()
-    fig.savefig(REPORTS / "shap_beeswarm.png", dpi=150, bbox_inches="tight")
+    fname = f"shap_beeswarm{model_suffix}.png"
+    fig.savefig(REPORTS / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("  -> reports/shap_beeswarm.png")
+    print(f"  -> reports/{fname}")
 
     # Bar summary
     fig, ax = plt.subplots(figsize=(9, 7))
@@ -325,9 +328,10 @@ def plot_shap(model: xgb.XGBRegressor, X_test: pd.DataFrame) -> None:
     plt.title("SHAP mean |value| — top 20 features",
               fontsize=12, fontweight="bold")
     plt.tight_layout()
-    fig.savefig(REPORTS / "shap_summary.png", dpi=150, bbox_inches="tight")
+    fname = f"shap_summary{model_suffix}.png"
+    fig.savefig(REPORTS / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("  -> reports/shap_summary.png")
+    print(f"  -> reports/{fname}")
 
     # Top 15 features by mean |SHAP|
     mean_abs = np.abs(shap_values).mean(axis=0)
@@ -450,14 +454,14 @@ def main() -> None:
 
     print(f"\n[{n-2}/{n}] MIC_90 trend + residual plots")
     plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred)
-    plot_residuals(X_test, y_test, xgb_pred)
-    plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred)
+    plot_residuals(X_test, y_test, xgb_pred, model_suffix=model_suffix)
+    plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix=model_suffix)
 
     print(f"\n[{n-1}/{n}] SHAP")
     if args.skip_optuna:
         print("  (skipped — no XGBoost model)")
     else:
-        plot_shap(xgb_model, X_test)
+        plot_shap(xgb_model, X_test, model_suffix=model_suffix)
 
     print(f"\n[{n}/{n}] Write report")
     write_report(results, xgb_params, species_label=species_label, report_suffix=report_suffix)

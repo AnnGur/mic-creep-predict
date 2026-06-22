@@ -7,11 +7,11 @@ computes aggregated statistics, and saves committable JSON files to reports/.
 These JSON files contain NO raw patient data — only year/country-level
 aggregates — and are safe to commit to the public repo.
 
-Outputs (all in reports/):
-    api_mic90_trend.json      — MIC90 by year (actual + model-predicted + forecast)
-    api_country_stats.json    — resistance rate + MIC90 by country
-    api_censoring_lookup.json — year -> pct_censored (used by live prediction endpoint)
-    api_shap_importance.json  — top 20 SHAP features (skipped if --skip-shap)
+Outputs (all in reports/api/):
+    api_{species}_mic90_trend.json      — MIC90 by year (actual + model-predicted + forecast)
+    api_{species}_country_stats.json    — resistance rate + MIC90 by country
+    api_{species}_censoring_lookup.json — year -> pct_censored (used by live prediction endpoint)
+    api_{species}_shap_importance.json  — top 20 SHAP features (skipped if --skip-shap)
 
 Run:
     .venv/bin/python scripts/4_run_export.py             # full
@@ -39,8 +39,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 MODELS_DIR = PROJECT_ROOT / "models"
-REPORTS    = PROJECT_ROOT / "reports"
-REPORTS.mkdir(exist_ok=True)
+REPORTS    = PROJECT_ROOT / "reports" / "api"
+REPORTS.mkdir(parents=True, exist_ok=True)
 
 EUCAST_R         = 8
 LOG2_R           = np.log2(EUCAST_R)

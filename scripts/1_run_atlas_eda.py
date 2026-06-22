@@ -404,7 +404,7 @@ def plot_specimen_source(df: pd.DataFrame, out: Path) -> None:
     )
     ax.legend(fontsize=9)
     plt.tight_layout()
-    fname = "specimen_source_mic90.png"
+    fname = "specimen_source_mic90_kpneumoniae.png"
     fig.savefig(out / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  → {fname}")
@@ -435,7 +435,7 @@ def plot_resistance_genes(df: pd.DataFrame, out: Path) -> None:
         fontsize=12, fontweight="bold",
     )
     plt.tight_layout()
-    fname = "gene_prevalence_over_time.png"
+    fname = "gene_prevalence_over_time_kpneumoniae.png"
     fig.savefig(out / fname, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  → {fname}")
@@ -506,8 +506,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--reports",
         type=Path,
-        default=PROJECT_ROOT / "reports",
-        help="Output directory for PNG charts (default: reports/)",
+        default=PROJECT_ROOT / "reports" / "eda",
+        help="Output directory for PNG charts (default: reports/eda/)",
     )
     return parser.parse_args()
 

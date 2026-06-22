@@ -7,7 +7,7 @@ Klebsiella pneumoniae and Acinetobacter baumannii + Meropenem.
 Startup behaviour:
   - Dev  (MODEL_SOURCE=local): loads models from disk
   - Prod (MODEL_SOURCE=huggingface): downloads artefacts from HF Hub
-  - Pre-computed JSON data (reports/api_*.json) is loaded once at startup
+  - Pre-computed JSON data (reports/api/api_*.json) is loaded once at startup
   - Missing A. baumannii artefacts are skipped gracefully (model not yet trained)
 
 Endpoints:
@@ -43,7 +43,7 @@ from pydantic import BaseModel, Field
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MODELS_DIR   = PROJECT_ROOT / "models"
-REPORTS      = PROJECT_ROOT / "reports"
+REPORTS      = PROJECT_ROOT / "reports" / "api"
 
 MODEL_SOURCE = os.getenv("MODEL_SOURCE", "local")
 HF_REPO      = os.getenv("HF_MODEL_REPO", "")
@@ -313,7 +313,7 @@ Pfizer/Vivli. Controlled access via Vivli AMR Surveillance Platform.</p>
 <div class="table-wrap"><table>
   <tr><th>Species</th><th>Antibiotic</th><th>Isolates</th><th>Years</th><th>Countries</th></tr>
   <tr><td><em>K. pneumoniae</em></td><td>Meropenem</td><td>89,572</td><td>2004-2022</td><td>66</td></tr>
-  <tr><td><em>A. baumannii</em></td><td>Meropenem</td><td>ATLAS cohort</td><td>2004-2022</td><td>66</td></tr>
+  <tr><td><em>A. baumannii</em></td><td>Meropenem</td><td>37,540</td><td>2004-2022</td><td>66</td></tr>
 </table></div>
 
 <h2>Key Finding — MIC Creep is Confirmed</h2>
