@@ -438,13 +438,13 @@ def slide_06_data_quality(prs):
 
 
 def slide_07_model(prs):
-    """Modeling approach."""
+    """Modeling approach - interpretable baseline vs advanced model."""
     sl = blank_slide(prs)
     rect(sl, 0, 0, 13.33, 7.5, LIGHT_BG)
-    header_bar(sl, "Modeling Approach",
-               "Time-aware XGBoost regression with Optuna hyperparameter optimization")
+    header_bar(sl, "Model Development",
+               "Interpretable baseline vs advanced model - explicit complexity/accuracy/interpretability tradeoff")
 
-    # Left column
+    # Left column - train/test split + target
     rect(sl, 0.4, 1.6, 6.0, 5.55, WHITE)
     bullet_box(sl, 0.6, 1.72, 5.6, 2.0,
                title="Train / Test Split (Time-Ordered)",
@@ -454,52 +454,65 @@ def slide_07_model(prs):
                    "A. baumannii:  24,003 train / 13,537 test (64% / 36%)",
                    "",
                    "NO random shuffling - would leak future data into training",
-                   "and make results appear better than real-world performance.",
+                   "and produce overly optimistic performance estimates.",
                ],
                size=13, color=DARK)
 
-    rect(sl, 0.6, 3.75, 5.6, 0.04, TEAL)
+    rect(sl, 0.6, 3.72, 5.6, 0.04, TEAL)
 
-    bullet_box(sl, 0.6, 3.88, 5.6, 3.1,
+    bullet_box(sl, 0.6, 3.85, 5.6, 1.55,
                title="Target Variable",
                items=[
                    "log2(MIC) - continuous regression",
-                   "",
-                   "Log2 scale is standard in microbiology:",
-                   "  MIC panels report in doubling dilutions",
-                   "  1 log2 unit = 1 dilution step",
-                   "  = minimum detectable difference between measurements",
+                   "Log2 scale: 1 unit = 1 dilution step = minimum detectable difference",
+                   "Evaluated: RMSE, MAE, R2 (full test) + RMSE/MAE on resistant subset",
                ],
-               size=14, color=DARK)
+               size=13, color=DARK)
 
-    # Right column
-    rect(sl, 6.8, 1.6, 6.1, 2.65, NAVY)
-    bullet_box(sl, 7.0, 1.72, 5.7, 2.4,
-               title="Random Forest Baseline",
+    rect(sl, 0.6, 5.5, 5.6, 0.04, TEAL)
+
+    bullet_box(sl, 0.6, 5.62, 5.6, 1.38,
+               title="Why Not Linear Regression?",
+               items=[
+                   "Gene x country interactions are strongly non-linear",
+                   "  (NDM in India vs NDM in Greece differ by 3+ log2 units)",
+                   "Bimodal MIC target violates normality assumptions",
+                   "Tree-based models are standard in AMR surveillance literature",
+               ],
+               size=12, color=GRAY, title_color=GRAY)
+
+    # Right column - Model 1: RF (interpretable baseline)
+    rect(sl, 6.8, 1.6, 6.1, 2.6, NAVY)
+    bullet_box(sl, 7.0, 1.72, 5.7, 2.35,
+               title="(1) Random Forest - More Interpretable Baseline",
                title_color=WHITE,
                items=[
                    "scikit-learn, n_estimators=200",
-                   "3x sample weight on resistant isolates",
-                   "Benchmark for XGBoost comparison",
+                   "Direct feature importances - no SHAP post-hoc needed",
+                   "Each tree is a decision path reviewers can inspect",
+                   "3x weight on resistant isolates (MIC >= 8 mg/L)",
+                   "Better overall RMSE; weaker on resistant-subset precision",
                ],
-               size=14, color=RGBColor(0xDD, 0xEE, 0xFF))
+               size=13, color=RGBColor(0xDD, 0xEE, 0xFF))
 
-    rect(sl, 6.8, 4.4, 6.1, 2.75, RGBColor(0x0D, 0x3B, 0x6E))
-    bullet_box(sl, 7.0, 4.52, 5.7, 2.5,
-               title="XGBoost + Optuna (Primary)",
+    # Model 2: XGBoost (advanced)
+    rect(sl, 6.8, 4.35, 6.1, 2.75, RGBColor(0x0D, 0x3B, 0x6E))
+    bullet_box(sl, 7.0, 4.47, 5.7, 2.5,
+               title="(2) XGBoost + Optuna - Advanced Model",
                title_color=WHITE,
                items=[
-                   "60 Optuna trials, objective: RMSE",
-                   "Internal validation: last 3 training years",
-                   "Handles year/censoring collinearity (r=0.61)",
+                   "60 Optuna trials, internal validation: last 3 training years",
                    "Captures gene x country interaction effects",
-                   "  e.g. NDM in India vs NDM in Greece",
+                   "Tradeoff: +32% accuracy on resistant subset (K. pneu)",
+                   "  vs interpretability cost - requires SHAP for explanation",
                    "Independent model per species",
                ],
-               size=14, color=RGBColor(0xBB, 0xDD, 0xFF))
+               size=13, color=RGBColor(0xBB, 0xDD, 0xFF))
 
-    # Tiny params box
-    rect(sl, 6.8, 7.18, 6.1, 0.2, TEAL)
+    rect(sl, 6.8, 7.18, 6.1, 0.22, TEAL)
+    textbox(sl, 6.9, 7.21, 5.9, 0.19,
+            "Tradeoff: XGBoost wins on clinically relevant resistant-subset RMSE; RF is more directly interpretable",
+            size=10, color=WHITE, italic=True)
 
 
 def slide_08_features(prs):
@@ -610,10 +623,11 @@ def slide_09_results(prs):
                          "Lower absolute RMSE than K. pneu because resistance is near-universal - less variance to explain.",
     )
 
-    textbox(sl, 0.4, 6.92, 12.5, 0.3,
-            "All metrics in log2 MIC units. "
-            "RMSE (R) = error only on isolates with true MIC >= 8 mg/L - the clinically relevant subset.",
-            size=11, color=GRAY, italic=True)
+    textbox(sl, 0.4, 6.68, 12.5, 0.52,
+            "Metrics in log2 MIC units. RMSE (R) and MAE (R) = resistant subset (MIC >= 8 mg/L) - the clinically relevant measure. "
+            "R2 on full test set is low for both species due to bimodal MIC distribution (80% of isolates at censoring floor); "
+            "full metrics including R2 reported in supplementary notebook.",
+            size=10, color=GRAY, italic=True)
 
 
 def slide_10_shap(prs):
@@ -848,11 +862,11 @@ def slide_11b_specimen_source(prs):
     _two_chart_slide(
         prs,
         title="MIC90 by Specimen Source",
-        subtitle="Wound isolates show highest resistance - relevant to combat and trauma settings",
+        subtitle="Both species: all 6 specimen types shown. K. pneumoniae shows variation; A. baumannii saturates at 32 mg/L across all sources",
         img_left="specimen_source_mic90_kpneumoniae.png",
         img_right="specimen_source_mic90_abaumannii.png",
-        cap_left="K. pneumoniae: wound and blood specimens show highest MIC90",
-        cap_right="A. baumannii: respiratory and wound - VAP and trauma-wound association",
+        cap_left="K. pneumoniae: respiratory/blood/peritoneal at MIC90=8 mg/L; urine lowest (1 mg/L)",
+        cap_right="A. baumannii: all sources at ceiling (32 mg/L); bars colored by %R - respiratory highest (70%R)",
         col_left=NAVY,
         col_right=RED,
     )
@@ -1049,33 +1063,86 @@ def slide_14_dashboard(prs):
             size=10, color=GRAY, italic=True)
 
 
-def slide_13_next(prs):
-    """Next steps."""
+def slide_13_conclusions(prs):
+    """Conclusions and Lessons Learned."""
     sl = blank_slide(prs)
     rect(sl, 0, 0, 13.33, 7.5, DARK)
     rect(sl, 0, 0, 13.33, 0.12, TEAL)
 
-    textbox(sl, 0.7, 0.35, 12, 0.55,
-            "Next Steps", size=30, bold=True,
+    textbox(sl, 0.7, 0.2, 12, 0.55,
+            "Conclusions and Lessons Learned", size=28, bold=True,
             color=WHITE, align=PP_ALIGN.LEFT)
-    textbox(sl, 0.7, 0.95, 12, 0.4,
-            "Vivli AMR Challenge",
-            size=16, color=TEAL)
 
-    steps = [
-        ("[DONE] Both models trained",  "K. pneumoniae + A. baumannii XGBoost pipelines complete; artifacts on Hugging Face Hub"),
-        ("[DONE] API + Dashboard live", "Render.com REST API + Vercel Next.js dashboard deployed and publicly accessible"),
-        ("SHAP domain validation",      "Domain expert reviews gene and specimen feature weights for biological plausibility"),
-    ]
+    # Left column: Findings + Best model + Practical implications
+    rect(sl, 0.4, 0.95, 6.1, 6.4, RGBColor(0x0D, 0x1B, 0x2A))
 
-    for i, (title, detail) in enumerate(steps):
-        y = 1.7 + i * 1.12
-        rect(sl, 0.4, y, 0.5, 0.88, TEAL)
-        textbox(sl, 0.52, y + 0.18, 0.3, 0.45, str(i+1), size=20, bold=True,
-                color=DARK, align=PP_ALIGN.CENTER)
-        rect(sl, 0.9, y, 11.6, 0.88, RGBColor(0x0D, 0x1B, 0x2A))
-        textbox(sl, 1.1, y + 0.1, 4.5, 0.38, title, size=16, bold=True, color=WHITE)
-        textbox(sl, 1.1, y + 0.5, 11.0, 0.32, detail, size=13, color=GRAY)
+    bullet_box(sl, 0.6, 1.05, 5.7, 2.6,
+               title="Main Findings",
+               title_color=TEAL,
+               items=[
+                   "K. pneumoniae: measurable MIC creep confirmed",
+                   "  +1.97 mg/L/yr MIC90 slope (R2=0.67, p<0.001)",
+                   "  Resistance tripled: 5% (2007) -> 20% (2022)",
+                   "  Model detects the trend before threshold breach",
+                   "",
+                   "A. baumannii: resistance already at crisis level",
+                   "  MIC90 at panel ceiling (32 mg/L) since 2005",
+                   "  70% resistant throughout test period 2019-2022",
+               ],
+               size=12, color=RGBColor(0xCC, 0xDD, 0xEE))
+
+    bullet_box(sl, 0.6, 3.75, 5.7, 1.35,
+               title="Best Model",
+               title_color=TEAL,
+               items=[
+                   "XGBoost (tuned): -32% RMSE on resistant K. pneu isolates vs RF",
+                   "RF provides more direct interpretability (feature importances)",
+                   "  without SHAP - preferred when transparency is critical",
+               ],
+               size=12, color=RGBColor(0xCC, 0xDD, 0xEE))
+
+    bullet_box(sl, 0.6, 5.2, 5.7, 1.0,
+               title="Practical Implications",
+               title_color=TEAL,
+               items=[
+                   "Enables early-warning surveillance before thresholds are breached",
+                   "Live API + dashboard: publicly accessible, no login required",
+                   "SHAP outputs require domain-expert validation before clinical use",
+               ],
+               size=12, color=RGBColor(0xCC, 0xDD, 0xEE))
+
+    # Right column: Lessons learned + Future improvements
+    rect(sl, 6.85, 0.95, 6.1, 6.4, RGBColor(0x0D, 0x1B, 0x2A))
+
+    bullet_box(sl, 7.05, 1.05, 5.7, 3.15,
+               title="Lessons Learned",
+               title_color=AMBER,
+               items=[
+                   "RMSE on full dataset misleads for bimodal MIC data",
+                   "  80% at censoring floor -> RMSE(resistant) is primary metric",
+                   "",
+                   "Time-aware splits are non-negotiable for surveillance data",
+                   "  random shuffle produces artificially optimistic estimates",
+                   "",
+                   "Panel artifacts need explicit features in the model",
+                   "  is_censored and pct_censored_year prevent confounding",
+                   "",
+                   "Gene x country interactions require tree-based models",
+                   "  NDM in India vs NDM in Greece differ by 3+ log2 units",
+               ],
+               size=12, color=RGBColor(0xFF, 0xEE, 0xCC))
+
+    bullet_box(sl, 7.05, 4.3, 5.7, 2.9,
+               title="Future Improvements",
+               title_color=AMBER,
+               items=[
+                   "Retrain with post-2022 data: NDM rising fast post-2018",
+                   "Tobit regression: principled handling of censored values",
+                   "Extend to all WHO priority pathogens and antibiotics",
+                   "Automated retraining pipeline for ongoing surveillance",
+                   "Integrate with Ukraine national AMR surveillance infrastructure",
+               ],
+               size=12, color=RGBColor(0xFF, 0xEE, 0xCC))
 
 
 # =============================================================================
@@ -1084,27 +1151,35 @@ def slide_13_next(prs):
 
 def main():
     prs = new_prs()
+    # --- Motivation ---
     slide_01_title(prs)
     slide_02_problem(prs)
     slide_03_why_matters(prs)
     slide_04_pathogens(prs)
+    # --- Data ---
     slide_05_data(prs)
+    # --- EDA ---
+    slide_11a_gene_prevalence(prs)
+    slide_11b_specimen_source(prs)
     slide_06_data_quality(prs)
-    slide_07_model(prs)
+    # --- Methods ---
     slide_08_features(prs)
+    slide_07_model(prs)
+    # --- Results ---
     slide_09_results(prs)
+    slide_11c_rmse(prs)
+    slide_11d_residuals(prs)
+    # --- Interpretation ---
     slide_09b_comparison(prs)
     slide_10_shap(prs)
     slide_10b_shap_ab(prs)
-    slide_11a_gene_prevalence(prs)
-    slide_11b_specimen_source(prs)
-    slide_11c_rmse(prs)
-    slide_11d_residuals(prs)
     slide_11e_shap_charts(prs)
+    # --- Limitations + Conclusions ---
     slide_11_limitations(prs)
+    slide_13_conclusions(prs)
+    # --- Appendix ---
     slide_12_api(prs)
     slide_14_dashboard(prs)
-    slide_13_next(prs)
 
     prs.save(OUT)
     print(f"Saved: {OUT}  ({len(prs.slides)} slides)")

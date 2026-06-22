@@ -68,8 +68,8 @@ mic-creep-predict/
 │   │   ├── 3_run_model_training.py   # Train RF + XGBoost -> models/ + reports/model/
 │   │   └── 4_run_export.py           # Aggregate predictions -> reports/api/
 │   └── utils/                        # Supplementary tools (no raw data required)
-│       ├── gen_charts_abaumannii.py  # A. baumannii EDA charts from processed parquets
-│       ├── gen_model_charts_abaumannii.py  # A. baumannii model charts from saved model
+│       ├── gen_eda_charts.py         # Gene prevalence + specimen source (both species)
+│       ├── gen_model_charts.py       # RMSE + residuals + SHAP (both species)
 │       ├── upload_to_huggingface.py  # Push model artifacts to HF Hub
 │       └── paediatric_diagnostic.py  # Paediatric MIC₉₀ anomaly diagnostic
 │
@@ -94,8 +94,8 @@ mic-creep-predict/
 │   └── feature_names_abaumannii.json
 │
 ├── reports/
-│   ├── eda/                          # Charts from 1_run_atlas_eda.py + gen_charts_abaumannii.py
-│   ├── model/                        # Charts + MD from 3_run_model_training.py
+│   ├── eda/                          # Charts from 1_run_atlas_eda.py + gen_eda_charts.py
+│   ├── model/                        # Charts from 3_run_model_training.py + gen_model_charts.py
 │   ├── api/                          # JSON exports from 4_run_export.py (read by FastAPI at startup)
 │   └── atlas_eda_analysis.md
 │
@@ -166,16 +166,25 @@ Step 3 options:
 
 ### 3. Supplementary chart generation (no raw data needed)
 
-If models and processed parquets are already available:
+If models and processed parquets are already available, regenerate EDA and model charts
+for either species using the unified scripts:
 
 ```bash
-# A. baumannii EDA charts (gene prevalence, specimen source, MIC90 trend)
+# EDA charts — gene prevalence + specimen source (both species)
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/.mpl \
-  .venv/bin/python scripts/utils/gen_charts_abaumannii.py
+  .venv/bin/python scripts/utils/gen_eda_charts.py --species kpneumoniae
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/.mpl \
+  .venv/bin/python scripts/utils/gen_eda_charts.py --species abaumannii
 
-# A. baumannii model evaluation charts (RMSE, residuals, SHAP beeswarm)
+# Model evaluation charts — RMSE + residuals (+ optional SHAP beeswarm)
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/.mpl \
-  .venv/bin/python scripts/utils/gen_model_charts_abaumannii.py
+  .venv/bin/python scripts/utils/gen_model_charts.py --species kpneumoniae
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/.mpl \
+  .venv/bin/python scripts/utils/gen_model_charts.py --species abaumannii
+
+# Skip the slow SHAP computation (adds ~2 min per species)
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/.mpl \
+  .venv/bin/python scripts/utils/gen_model_charts.py --species kpneumoniae --skip-shap
 ```
 
 ---
