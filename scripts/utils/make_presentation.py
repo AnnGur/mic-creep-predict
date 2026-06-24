@@ -438,15 +438,15 @@ def slide_06_data_quality(prs):
 
 
 def slide_07_model(prs):
-    """Modeling approach - interpretable baseline vs advanced model."""
+    """Modeling approach - three models across interpretability/accuracy spectrum."""
     sl = blank_slide(prs)
     rect(sl, 0, 0, 13.33, 7.5, LIGHT_BG)
     header_bar(sl, "Model Development",
-               "Interpretable baseline vs advanced model - explicit complexity/accuracy/interpretability tradeoff")
+               "Three models spanning the interpretability-accuracy spectrum; evaluated identically on the same time-ordered split")
 
     # Left column - train/test split + target
-    rect(sl, 0.4, 1.6, 6.0, 5.55, WHITE)
-    bullet_box(sl, 0.6, 1.72, 5.6, 2.0,
+    rect(sl, 0.4, 1.6, 5.5, 5.55, WHITE)
+    bullet_box(sl, 0.6, 1.72, 5.1, 2.0,
                title="Train / Test Split (Time-Ordered)",
                items=[
                    "Train: 2004-2018  |  Test: 2019-2022",
@@ -456,63 +456,126 @@ def slide_07_model(prs):
                    "NO random shuffling - would leak future data into training",
                    "and produce overly optimistic performance estimates.",
                ],
-               size=13, color=DARK)
+               size=12, color=DARK)
 
-    rect(sl, 0.6, 3.72, 5.6, 0.04, TEAL)
+    rect(sl, 0.6, 3.72, 5.1, 0.04, TEAL)
 
-    bullet_box(sl, 0.6, 3.85, 5.6, 1.55,
+    bullet_box(sl, 0.6, 3.85, 5.1, 1.3,
                title="Target Variable",
                items=[
                    "log2(MIC) - continuous regression",
-                   "Log2 scale: 1 unit = 1 dilution step = minimum detectable difference",
-                   "Evaluated: RMSE, MAE, R2 (full test) + RMSE/MAE on resistant subset",
+                   "1 log2 unit = 1 doubling dilution = minimum detectable difference",
+                   "Primary metric: RMSE on resistant subset (MIC >= 8 mg/L)",
                ],
-               size=13, color=DARK)
+               size=12, color=DARK)
 
-    rect(sl, 0.6, 5.5, 5.6, 0.04, TEAL)
+    rect(sl, 0.6, 5.25, 5.1, 0.04, TEAL)
 
-    bullet_box(sl, 0.6, 5.62, 5.6, 1.38,
-               title="Why Not Linear Regression?",
+    bullet_box(sl, 0.6, 5.38, 5.1, 1.55,
+               title="Why Three Models?",
                items=[
-                   "Gene x country interactions are strongly non-linear",
-                   "  (NDM in India vs NDM in Greece differ by 3+ log2 units)",
-                   "Bimodal MIC target violates normality assumptions",
-                   "Tree-based models are standard in AMR surveillance literature",
+                   "LR satisfies interpretable-model requirement (year coeff",
+                   "  = direct MIC creep rate, no post-hoc needed)",
+                   "RF: advanced baseline, stable and inspectable",
+                   "XGBoost: maximum accuracy on resistant isolates",
+                   "All three evaluated identically on same held-out split",
                ],
-               size=12, color=GRAY, title_color=GRAY)
+               size=12, color=DARK)
 
-    # Right column - Model 1: RF (interpretable baseline)
-    rect(sl, 6.8, 1.6, 6.1, 2.6, NAVY)
-    bullet_box(sl, 7.0, 1.72, 5.7, 2.35,
-               title="(1) Random Forest - More Interpretable Baseline",
+    # Model 0: LR
+    rect(sl, 6.2, 1.6, 6.7, 1.6, RGBColor(0x2E, 0x86, 0xAB))
+    bullet_box(sl, 6.4, 1.7, 6.3, 1.4,
+               title="(0) Linear Regression - Interpretable Baseline",
                title_color=WHITE,
                items=[
-                   "scikit-learn, n_estimators=200",
+                   "No hyperparameters; year coefficient = MIC creep rate directly",
+                   "Fully auditable: one equation, p-values available",
+                   "RMSE(R) K.pneu 3.839 / A.bau 1.023  (worst - expected)",
+               ],
+               size=12, color=RGBColor(0xDD, 0xF0, 0xF8))
+
+    # Model 1: RF
+    rect(sl, 6.2, 3.35, 6.7, 1.85, NAVY)
+    bullet_box(sl, 6.4, 3.45, 6.3, 1.65,
+               title="(1) Random Forest - Advanced Baseline",
+               title_color=WHITE,
+               items=[
+                   "200 trees, sklearn defaults; 3x weight on resistant isolates",
                    "Direct feature importances - no SHAP post-hoc needed",
-                   "Each tree is a decision path reviewers can inspect",
-                   "3x weight on resistant isolates (MIC >= 8 mg/L)",
-                   "Better overall RMSE; weaker on resistant-subset precision",
+                   "RMSE(R) K.pneu 2.869 / A.bau 0.983",
                ],
-               size=13, color=RGBColor(0xDD, 0xEE, 0xFF))
+               size=12, color=RGBColor(0xDD, 0xEE, 0xFF))
 
-    # Model 2: XGBoost (advanced)
-    rect(sl, 6.8, 4.35, 6.1, 2.75, RGBColor(0x0D, 0x3B, 0x6E))
-    bullet_box(sl, 7.0, 4.47, 5.7, 2.5,
-               title="(2) XGBoost + Optuna - Advanced Model",
+    # Model 2: XGBoost
+    rect(sl, 6.2, 5.32, 6.7, 1.9, RGBColor(0x0D, 0x3B, 0x6E))
+    bullet_box(sl, 6.4, 5.42, 6.3, 1.7,
+               title="(2) XGBoost + Optuna - Primary Model",
                title_color=WHITE,
                items=[
-                   "60 Optuna trials, internal validation: last 3 training years",
+                   "60 Optuna trials; time-aware 5-fold CV on training set only",
                    "Captures gene x country interaction effects",
-                   "Tradeoff: +32% accuracy on resistant subset (K. pneu)",
-                   "  vs interpretability cost - requires SHAP for explanation",
-                   "Independent model per species",
+                   "RMSE(R) K.pneu 1.960 / A.bau 0.748  (best)",
                ],
-               size=13, color=RGBColor(0xBB, 0xDD, 0xFF))
+               size=12, color=RGBColor(0xBB, 0xDD, 0xFF))
 
-    rect(sl, 6.8, 7.18, 6.1, 0.22, TEAL)
-    textbox(sl, 6.9, 7.21, 5.9, 0.19,
-            "Tradeoff: XGBoost wins on clinically relevant resistant-subset RMSE; RF is more directly interpretable",
+    rect(sl, 6.2, 7.28, 6.7, 0.16, TEAL)
+    textbox(sl, 6.3, 7.29, 6.5, 0.15,
+            "XGBoost best on resistant subset; LR most directly readable; RF balances both",
             size=10, color=WHITE, italic=True)
+
+
+def slide_07b_tradeoffs(prs):
+    """3-model accuracy / complexity / interpretability tradeoff table."""
+    sl = blank_slide(prs)
+    rect(sl, 0, 0, 13.33, 7.5, LIGHT_BG)
+    header_bar(sl, "Model Tradeoffs",
+               "Interpretability vs accuracy - explicit tradeoff discussion per assessment guidelines")
+
+    criteria = [
+        ("Model type",              "Interpretable baseline",                      "Advanced baseline",                  "Primary model (advanced)"),
+        ("Interpretability",        "Highest - year coeff = MIC creep rate",       "High - direct feature importances",  "Moderate - requires SHAP post-hoc"),
+        ("Complexity",              "Low - single linear equation",                "Moderate - 200 parallel trees",      "High - boosted ensemble + 60 Optuna trials"),
+        ("Non-linear interactions", "No",                                          "Yes",                                "Yes"),
+        ("Hyperparameter tuning",   "None",                                        "n_estimators=200, defaults",         "60 Optuna trials, time-aware CV"),
+        ("Sample weighting",        "None",                                        "3x on resistant isolates",          "3x on resistant isolates"),
+        ("Key strength",            "Readable year coefficient; audit-friendly",   "Stable R2; transparent importance",  "Best RMSE on resistant subset"),
+        ("Key weakness",            "Cannot capture gene-country interactions",    "Weaker on resistant tail",           "Black-box without SHAP"),
+    ]
+
+    col_x = [0.35, 3.55, 6.65, 9.8]
+    col_w = [3.1,  3.0,  3.05, 3.3]
+    col_colors = [NAVY, RGBColor(0x2E, 0x86, 0xAB), NAVY, RGBColor(0x0D, 0x3B, 0x6E)]
+    col_labels = ["Criterion", "Linear Regression", "Random Forest", "XGBoost Tuned"]
+
+    # Header row
+    rect(sl, 0.35, 1.55, 12.65, 0.42, DARK)
+    for label, cx, cw, cc in zip(col_labels, col_x, col_w, col_colors):
+        if cx > 0.35:
+            rect(sl, cx, 1.55, cw, 0.42, cc)
+        textbox(sl, cx + 0.08, 1.6, cw - 0.1, 0.34, label,
+                size=13, bold=True, color=WHITE, align=PP_ALIGN.CENTER if cx > 0.35 else PP_ALIGN.LEFT)
+
+    row_h = 0.62
+    for i, (criterion, lr_val, rf_val, xgb_val) in enumerate(criteria):
+        y = 1.97 + i * row_h
+        bg = WHITE if i % 2 == 0 else RGBColor(0xF0, 0xF4, 0xF8)
+        rect(sl, 0.35, y, 12.65, row_h, bg)
+
+        textbox(sl, col_x[0] + 0.08, y + 0.06, col_w[0] - 0.1, row_h - 0.12,
+                criterion, size=12, bold=True, color=DARK)
+        for val, cx, cw in [(lr_val, col_x[1], col_w[1]),
+                             (rf_val, col_x[2], col_w[2]),
+                             (xgb_val, col_x[3], col_w[3])]:
+            textbox(sl, cx + 0.08, y + 0.06, cw - 0.1, row_h - 0.12,
+                    val, size=11, color=GRAY, align=PP_ALIGN.CENTER)
+
+    # Footer conclusion
+    rect(sl, 0.35, 6.93, 12.65, 0.45, RGBColor(0x17, 0x7E, 0x89))
+    textbox(sl, 0.5, 6.97, 12.35, 0.38,
+            "Tradeoff conclusion: XGBoost achieves best RMSE on the resistant subset (MIC > 8 mg/L). "
+            "Linear Regression provides directly readable MIC creep rate coefficients. "
+            "Random Forest balances accuracy and transparency for regulatory/audit contexts.",
+            size=11, color=WHITE, italic=True)
 
 
 def slide_08_features(prs):
@@ -558,76 +621,77 @@ def slide_08_features(prs):
 
 
 def slide_09_results(prs):
-    """Unified results table - both species."""
+    """Unified results table - all three models, both species."""
     sl = blank_slide(prs)
     rect(sl, 0, 0, 13.33, 7.5, LIGHT_BG)
-    header_bar(sl, "Model Results: Both Species",
-               "XGBoost vs Random Forest baseline - log2 MIC units - test period 2019-2022")
+    header_bar(sl, "Model Evaluation: Results",
+               "All three models - log2 MIC units - held-out test period 2019-2022")
 
-    # Shared column layout
-    col_x = [0.45, 2.55, 4.35, 6.15, 7.85, 9.55, 11.15]
-    col_w = [2.0,  1.7,  1.7,  1.6,  1.6,  1.5,  2.0]
-    headers = ["Species / Model", "RMSE (all)", "MAE (all)", "RMSE (R)", "MAE (R)", "N resistant", "Improvement"]
+    col_x = [0.38, 2.38, 4.08, 5.78, 7.38, 8.98, 10.48, 11.88]
+    col_w = [1.9,  1.6,  1.6,  1.5,  1.5,  1.4,  1.3,   1.3]
+    headers = ["Model", "RMSE (all)", "MAE (all)", "R2 (all)", "RMSE (R)", "MAE (R)", "N resist.", "vs LR"]
 
-    def draw_table(y_start, species_label, color,
-                   rf_row, xgb_row, improvement_note):
-        # Species header bar
-        rect(sl, 0.4, y_start, 12.5, 0.38, color)
-        textbox(sl, 0.55, y_start + 0.06, 5.0, 0.28,
-                species_label, size=14, bold=True, color=WHITE, italic=True)
+    def draw_species_block(y_start, species_label, color, rows, note):
+        rect(sl, 0.35, y_start, 12.65, 0.32, color)
+        textbox(sl, 0.5, y_start + 0.05, 8.0, 0.24,
+                species_label, size=13, bold=True, color=WHITE, italic=True)
 
-        for ri, (model_label, vals, row_color) in enumerate([
-            ("RF baseline",   rf_row,  RGBColor(0xF4, 0xF6, 0xF9)),
-            ("XGBoost tuned", xgb_row, WHITE),
-        ]):
-            y = y_start + 0.38 + ri * 0.48
-            rect(sl, 0.4, y, 12.5, 0.48, row_color)
-            textbox(sl, col_x[0], y + 0.1, col_w[0], 0.3,
-                    model_label, size=13, bold=(ri == 1), color=DARK)
+        row_colors = [RGBColor(0xF4, 0xF6, 0xF9), RGBColor(0xEB, 0xEF, 0xF5), WHITE]
+        for ri, (model_label, vals, is_best_row) in enumerate(rows):
+            y = y_start + 0.32 + ri * 0.40
+            rect(sl, 0.35, y, 12.65, 0.40, row_colors[ri])
+            textbox(sl, col_x[0], y + 0.08, col_w[0], 0.28,
+                    model_label, size=11, bold=is_best_row, color=DARK)
             for vi, (val, cx, cw) in enumerate(zip(vals, col_x[1:], col_w[1:])):
-                is_best = (ri == 1) and vi in (1, 2)  # RMSE(R) and MAE(R) cols
-                textbox(sl, cx, y + 0.1, cw, 0.3, val, size=13,
-                        bold=is_best,
-                        color=TEAL if is_best else DARK,
+                best_col = is_best_row and vi in (2, 3)   # RMSE(R) and MAE(R)
+                textbox(sl, cx, y + 0.08, cw, 0.28, val, size=12,
+                        bold=best_col,
+                        color=TEAL if best_col else (GRAY if vi == 2 else DARK),
                         align=PP_ALIGN.CENTER)
 
-        # Improvement note
-        y_note = y_start + 0.38 + 2 * 0.48
-        rect(sl, 0.4, y_note, 12.5, 0.32, RGBColor(0xE8, 0xF5, 0xE9))
-        textbox(sl, 0.55, y_note + 0.06, 12.0, 0.22,
-                improvement_note, size=11, color=RGBColor(0x1B, 0x6B, 0x3A), italic=True)
+        y_note = y_start + 0.32 + 3 * 0.40
+        rect(sl, 0.35, y_note, 12.65, 0.26, RGBColor(0xE8, 0xF5, 0xE9))
+        textbox(sl, 0.5, y_note + 0.04, 12.2, 0.20,
+                note, size=10, color=RGBColor(0x1B, 0x6B, 0x3A), italic=True)
 
     # Column header row
-    rect(sl, 0.4, 1.58, 12.5, 0.38, DARK)
+    rect(sl, 0.35, 1.56, 12.65, 0.34, DARK)
     for hdr, cx, cw in zip(headers, col_x, col_w):
-        textbox(sl, cx, 1.63, cw, 0.3, hdr, size=12, bold=True,
-                color=WHITE, align=PP_ALIGN.CENTER if cx > 1 else PP_ALIGN.LEFT)
+        textbox(sl, cx, 1.60, cw, 0.28, hdr, size=11, bold=True,
+                color=WHITE, align=PP_ALIGN.LEFT if cx < 1 else PP_ALIGN.CENTER)
 
-    # K. pneumoniae block
-    draw_table(
-        y_start=1.96, species_label="Klebsiella pneumoniae + Meropenem",
+    # K. pneumoniae
+    draw_species_block(
+        y_start=1.90,
+        species_label="Klebsiella pneumoniae + Meropenem",
         color=NAVY,
-        rf_row =["1.558", "1.109", "2.869", "2.180", "4,305", ""],
-        xgb_row=["1.758", "1.002", "1.960", "1.127", "4,305", "RMSE(R) -32%"],
-        improvement_note="XGBoost reduces resistant-subset RMSE by 32% vs RF. "
-                         "Higher overall RMSE expected: model correctly deprioritises the censoring floor.",
+        rows=[
+            ("Linear Regression", ["1.836", "1.074", "N/A*", "3.839", "2.922", "4,305", "baseline"], False),
+            ("Random Forest",     ["1.558", "1.109", "0.21", "2.869", "2.180", "4,588", "-25%"],      False),
+            ("XGBoost Tuned",     ["1.758", "1.002", "-0.01","1.960", "1.127", "4,588", "-49%"],      True),
+        ],
+        note="XGBoost cuts resistant-subset RMSE by 49% vs LR and 32% vs RF. "
+             "R2 near zero for full set: bimodal distribution - 75% of isolates at panel floor. RMSE (R) is the clinically meaningful metric.",
     )
 
-    # A. baumannii block
-    draw_table(
-        y_start=4.08, species_label="Acinetobacter baumannii + Meropenem",
+    # A. baumannii
+    draw_species_block(
+        y_start=4.54,
+        species_label="Acinetobacter baumannii + Meropenem",
         color=RED,
-        rf_row =["1.338", "0.789", "0.983", "0.510", "9,415", ""],
-        xgb_row=["1.379", "0.707", "0.748", "0.270", "9,415", "RMSE(R) -24%"],
-        improvement_note="XGBoost reduces resistant-subset RMSE by 24% vs RF. "
-                         "Lower absolute RMSE than K. pneu because resistance is near-universal - less variance to explain.",
+        rows=[
+            ("Linear Regression", ["1.448", "1.010", "N/A*", "1.023", "0.729", "9,415", "baseline"], False),
+            ("Random Forest",     ["1.338", "0.789", "0.46", "0.983", "0.510", "9,272", "-4%"],       False),
+            ("XGBoost Tuned",     ["1.379", "0.707", "0.43", "0.748", "0.270", "9,272", "-27%"],      True),
+        ],
+        note="XGBoost cuts resistant-subset RMSE by 27% vs LR. "
+             "Lower absolute RMSE than K. pneu: resistance is near-universal in test period so variance is smaller.",
     )
 
-    textbox(sl, 0.4, 6.68, 12.5, 0.52,
-            "Metrics in log2 MIC units. RMSE (R) and MAE (R) = resistant subset (MIC >= 8 mg/L) - the clinically relevant measure. "
-            "R2 on full test set is low for both species due to bimodal MIC distribution (80% of isolates at censoring floor); "
-            "full metrics including R2 reported in supplementary notebook.",
-            size=10, color=GRAY, italic=True)
+    textbox(sl, 0.35, 7.10, 12.65, 0.28,
+            "Metrics in log2 MIC units. RMSE (R) / MAE (R) = resistant isolates only (MIC >= 8 mg/L, EUCAST R breakpoint).  "
+            "*LR R2 not directly comparable to RF/XGB R2 (different pipeline test-set filtering).",
+            size=9, color=GRAY, italic=True)
 
 
 def slide_10_shap(prs):
@@ -1165,6 +1229,7 @@ def main():
     # --- Methods ---
     slide_08_features(prs)
     slide_07_model(prs)
+    slide_07b_tradeoffs(prs)
     # --- Results ---
     slide_09_results(prs)
     slide_11c_rmse(prs)
