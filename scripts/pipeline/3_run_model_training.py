@@ -1,11 +1,12 @@
 """
 Model training — K. pneumoniae + Meropenem MIC Creep
 =====================================================
-Step 1: Random Forest baseline (no tuning)
-Step 2: XGBoost Regressor with Optuna hyperparameter search
-Step 3: Evaluation — overall RMSE/MAE + resistant-subset RMSE + MIC_90 trend
-Step 4: SHAP feature importance
-Step 5: Save model artefacts
+Step 1: Linear Regression baseline (interpretable — year coefficient = MIC creep rate)
+Step 2: Random Forest (200 trees)
+Step 3: XGBoost Regressor with Optuna hyperparameter search
+Step 4: Evaluation — overall RMSE/MAE/R2 + resistant-subset RMSE + MIC_90 trend
+Step 5: SHAP feature importance
+Step 6: Save model artefacts
 
 Inputs (from 2_run_feature_engineering.py):
     data/processed/{species}/X_train.parquet
@@ -49,7 +50,8 @@ import joblib
 import optuna
 import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -101,6 +103,7 @@ def load_data(data_dir: Path) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd
 def compute_metrics(y_true: pd.Series, y_pred: np.ndarray, label: str) -> dict:
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     mae  = mean_absolute_error(y_true, y_pred)
+    r2   = r2_score(y_true, y_pred)
 
     mask_r = y_true >= LOG2_R
     rmse_r = np.sqrt(mean_squared_error(y_true[mask_r], y_pred[mask_r])) if mask_r.any() else np.nan
@@ -110,11 +113,30 @@ def compute_metrics(y_true: pd.Series, y_pred: np.ndarray, label: str) -> dict:
     print(f"\n  [{label}]")
     print(f"    RMSE (all)       = {rmse:.4f}")
     print(f"    MAE  (all)       = {mae:.4f}")
+    print(f"    R2   (all)       = {r2:.4f}")
     print(f"    RMSE (R subset)  = {rmse_r:.4f}  (n={n_r:,})")
     print(f"    MAE  (R subset)  = {mae_r:.4f}")
 
-    return {"label": label, "rmse": rmse, "mae": mae,
+    return {"label": label, "rmse": rmse, "mae": mae, "r2": r2,
             "rmse_resistant": rmse_r, "mae_resistant": mae_r, "n_resistant": int(n_r)}
+
+
+# ---------------------------------------------------------------------------
+# Linear Regression baseline (interpretable — year coeff = MIC creep rate)
+# ---------------------------------------------------------------------------
+
+def train_lr(X_train, y_train, model_suffix: str = "") -> LinearRegression:
+    print("  Fitting Linear Regression baseline (OLS, no regularisation)...")
+    lr = LinearRegression()
+    lr.fit(X_train, y_train)
+    fname = f"lr_baseline{model_suffix}.pkl"
+    joblib.dump(lr, MODELS_DIR / fname)
+    yr_idx  = list(X_train.columns).index("year")
+    yr_coef = lr.coef_[yr_idx]
+    print(f"  Year coefficient: {yr_coef:.4f} log2 units/yr  "
+          f"(= +{2**abs(yr_coef) - 1:.1%} MIC fold-change per year)")
+    print(f"  Saved -> models/{fname}")
+    return lr
 
 
 # ---------------------------------------------------------------------------
@@ -201,9 +223,10 @@ def tune_xgb(X_train, y_train, n_trials: int, model_suffix: str = "") -> xgb.XGB
 # MIC_90 trend: actual vs predicted
 # ---------------------------------------------------------------------------
 
-def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred) -> None:
+def plot_mic90_trend(X_test, y_test, lr_pred, rf_pred, xgb_pred) -> None:
     df = X_test[["year"]].copy()
     df["actual"]  = y_test.values
+    df["lr_pred"] = lr_pred
     df["rf_pred"] = rf_pred
     df["xgb_pred"]= xgb_pred
 
@@ -211,12 +234,14 @@ def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred) -> None:
 
     yr = df.groupby("year").agg(
         actual  =("actual",   mic90_log2),
+        lr_pred =("lr_pred",  mic90_log2),
         rf_pred =("rf_pred",  mic90_log2),
         xgb_pred=("xgb_pred", mic90_log2),
     ).reset_index()
 
     fig, ax = plt.subplots()
     ax.plot(yr["year"], yr["actual"],   "o-",  color="#1f77b4", lw=2, ms=6, label="Actual MIC_90")
+    ax.plot(yr["year"], yr["lr_pred"],  "D:",  color="#ff7f0e", lw=1.5, ms=5, label="Linear Regression")
     ax.plot(yr["year"], yr["rf_pred"],  "s--", color="#2ca02c", lw=1.5, ms=5, label="RF baseline")
     ax.plot(yr["year"], yr["xgb_pred"], "^-",  color="#d62728", lw=2, ms=5, label="XGBoost tuned")
     ax.axhline(LOG2_R, color="black", linestyle=":", lw=1.5, label="EUCAST R (log2=3)")
@@ -231,9 +256,9 @@ def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred) -> None:
     print("  -> reports/mic90_trend_predicted.png")
 
     print("\n  MIC_90 (log2) by year — test set:")
-    print(f"  {'Year':>4}  {'Actual':>7}  {'RF':>7}  {'XGB':>7}")
+    print(f"  {'Year':>4}  {'Actual':>7}  {'LR':>7}  {'RF':>7}  {'XGB':>7}")
     for _, r in yr.iterrows():
-        print(f"  {int(r.year):4d}  {r.actual:7.3f}  {r.rf_pred:7.3f}  {r.xgb_pred:7.3f}")
+        print(f"  {int(r.year):4d}  {r.actual:7.3f}  {r.lr_pred:7.3f}  {r.rf_pred:7.3f}  {r.xgb_pred:7.3f}")
 
 
 # ---------------------------------------------------------------------------
@@ -266,9 +291,10 @@ def plot_residuals(X_test, y_test, xgb_pred, model_suffix: str = "") -> None:
 # RMSE by year
 # ---------------------------------------------------------------------------
 
-def plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix: str = "") -> None:
+def plot_rmse_by_year(X_test, y_test, lr_pred, rf_pred, xgb_pred, model_suffix: str = "") -> None:
     df = X_test[["year"]].copy()
     df["actual"]   = y_test.values
+    df["lr_pred"]  = lr_pred
     df["rf_pred"]  = rf_pred
     df["xgb_pred"] = xgb_pred
 
@@ -276,21 +302,23 @@ def plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix: str = "")
     for yr, g in df.groupby("year"):
         rows.append({
             "year":     yr,
+            "lr_rmse":  np.sqrt(mean_squared_error(g["actual"], g["lr_pred"])),
             "rf_rmse":  np.sqrt(mean_squared_error(g["actual"], g["rf_pred"])),
             "xgb_rmse": np.sqrt(mean_squared_error(g["actual"], g["xgb_pred"])),
         })
     yr_df = pd.DataFrame(rows)
 
     fig, ax = plt.subplots()
-    w = 0.35
+    w = 0.25
     x = np.arange(len(yr_df))
-    ax.bar(x - w/2, yr_df["rf_rmse"],  width=w, color="#2ca02c", alpha=0.8, label="RF baseline")
-    ax.bar(x + w/2, yr_df["xgb_rmse"], width=w, color="#d62728", alpha=0.8, label="XGBoost tuned")
+    ax.bar(x - w,     yr_df["lr_rmse"],  width=w, color="#ff7f0e", alpha=0.8, label="Linear Regression")
+    ax.bar(x,         yr_df["rf_rmse"],  width=w, color="#2ca02c", alpha=0.8, label="RF baseline")
+    ax.bar(x + w,     yr_df["xgb_rmse"], width=w, color="#d62728", alpha=0.8, label="XGBoost tuned")
     ax.set_xticks(x)
     ax.set_xticklabels(yr_df["year"].astype(int))
     ax.set_xlabel("Year", fontsize=11)
     ax.set_ylabel("RMSE (log2 MIC)", fontsize=11)
-    ax.set_title("RMSE by year — RF vs XGBoost (Test 2019-2022)",
+    ax.set_title("RMSE by year — LR vs RF vs XGBoost (Test 2019-2022)",
                  fontsize=12, fontweight="bold")
     ax.legend(fontsize=9)
     plt.tight_layout()
@@ -353,12 +381,12 @@ def write_report(results: list[dict], xgb_params: dict, species_label: str = "K.
         f"**Generated**: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}\n",
         "---\n",
         "## Evaluation Metrics\n",
-        "| Model | RMSE (all) | MAE (all) | RMSE (R subset) | MAE (R subset) | N resistant |\n",
-        "|---|---|---|---|---|---|\n",
+        "| Model | RMSE (all) | MAE (all) | R2 (all) | RMSE (R subset) | MAE (R subset) | N resistant |\n",
+        "|---|---|---|---|---|---|---|\n",
     ]
     for r in results:
         lines.append(
-            f"| {r['label']} | {r['rmse']:.4f} | {r['mae']:.4f} | "
+            f"| {r['label']} | {r['rmse']:.4f} | {r['mae']:.4f} | {r.get('r2', float('nan')):.4f} | "
             f"{r['rmse_resistant']:.4f} | {r['mae_resistant']:.4f} | {r['n_resistant']:,} |\n"
         )
 
@@ -414,7 +442,7 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
-    n = 5 if args.skip_optuna else 6
+    n = 6 if args.skip_optuna else 7
 
     species_label  = SPECIES_MAP[args.species].replace("Klebsiella", "K.").replace("Acinetobacter", "A.")
     model_suffix   = f"_{args.species}"
@@ -429,31 +457,36 @@ def main() -> None:
     with open(MODELS_DIR / feature_names_fname, "w") as f:
         json.dump(list(X_train.columns), f)
 
-    print(f"\n[2/{n}] Random Forest baseline")
+    print(f"\n[2/{n}] Linear Regression baseline (interpretable)")
+    lr = train_lr(X_train, y_train, model_suffix=model_suffix)
+    lr_pred    = lr.predict(X_test)
+    lr_metrics = compute_metrics(y_test, lr_pred, "Linear Regression (interpretable)")
+
+    print(f"\n[3/{n}] Random Forest baseline")
     rf = train_rf(X_train, y_train, model_suffix=model_suffix)
-    rf_pred  = rf.predict(X_test)
+    rf_pred    = rf.predict(X_test)
     rf_metrics = compute_metrics(y_test, rf_pred, "RF baseline")
 
     if args.skip_optuna:
         print("\n  --skip-optuna set: skipping XGBoost tuning.")
-        xgb_model  = rf
-        xgb_pred   = rf_pred
+        xgb_model   = rf
+        xgb_pred    = rf_pred
         xgb_metrics = rf_metrics
         xgb_params  = {}
-        results     = [rf_metrics]
+        results     = [lr_metrics, rf_metrics]
     else:
-        print(f"\n[3/{n}] XGBoost + Optuna ({args.n_trials} trials)")
-        xgb_model  = tune_xgb(X_train, y_train, n_trials=args.n_trials, model_suffix=model_suffix)
-        xgb_pred   = xgb_model.predict(X_test)
+        print(f"\n[4/{n}] XGBoost + Optuna ({args.n_trials} trials)")
+        xgb_model   = tune_xgb(X_train, y_train, n_trials=args.n_trials, model_suffix=model_suffix)
+        xgb_pred    = xgb_model.predict(X_test)
         xgb_metrics = compute_metrics(y_test, xgb_pred, "XGBoost tuned")
         with open(MODELS_DIR / f"xgb_best_params{model_suffix}.json") as f:
             xgb_params = json.load(f)
-        results = [rf_metrics, xgb_metrics]
+        results = [lr_metrics, rf_metrics, xgb_metrics]
 
     print(f"\n[{n-2}/{n}] MIC_90 trend + residual plots")
-    plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred)
+    plot_mic90_trend(X_test, y_test, lr_pred, rf_pred, xgb_pred)
     plot_residuals(X_test, y_test, xgb_pred, model_suffix=model_suffix)
-    plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix=model_suffix)
+    plot_rmse_by_year(X_test, y_test, lr_pred, rf_pred, xgb_pred, model_suffix=model_suffix)
 
     print(f"\n[{n-1}/{n}] SHAP")
     if args.skip_optuna:

@@ -136,6 +136,15 @@ xattr -dr com.apple.quarantine .venv/
 
 ### 2. Run the pipeline
 
+#### Option A — single command
+
+```bash
+bash run_all.sh                # full pipeline for both species (~2–3 h with Optuna)
+bash run_all.sh --skip-optuna  # skip hyperparameter tuning (~15 min)
+```
+
+#### Option B — step by step
+
 Both species use `--species kpneumoniae` (default) or `--species abaumannii`.
 
 ```bash
@@ -153,15 +162,28 @@ Both species use `--species kpneumoniae` (default) or `--species abaumannii`.
 # Step 4 — Export aggregated data for API (outputs to reports/api/)
 .venv/bin/python scripts/pipeline/4_run_export.py --species kpneumoniae
 .venv/bin/python scripts/pipeline/4_run_export.py --species abaumannii
-
-# Run API locally
-.venv/bin/python -m uvicorn src.api.main:app --reload --port 8000
 ```
 
 Step 3 options:
 ```bash
 --skip-optuna      # RF baseline only, ~2 min
 --n-trials N       # Optuna trials (default 60)
+```
+
+### 3. Run the API locally
+
+```bash
+.venv/bin/python -m uvicorn src.api.main:app --reload --port 8000
+```
+
+Model artefacts are loaded from Hugging Face Hub at startup — no local raw data needed.
+
+### 4. Run the frontend locally
+
+```bash
+cd frontend/app
+npm install
+npm run dev    # dev server at http://localhost:3000
 ```
 
 ### 3. Supplementary chart generation (no raw data needed)
