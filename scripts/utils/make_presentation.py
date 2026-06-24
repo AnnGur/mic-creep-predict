@@ -578,6 +578,88 @@ def slide_07b_tradeoffs(prs):
             size=11, color=WHITE, italic=True)
 
 
+def slide_preprocessing(prs):
+    """Pre-processing pipeline applied to raw ATLAS data."""
+    sl = blank_slide(prs)
+    rect(sl, 0, 0, 13.33, 7.5, LIGHT_BG)
+    header_bar(sl, "Data Pre-processing Pipeline",
+               "Applied identically to K. pneumoniae (89,572 isolates) and A. baumannii (37,540 isolates)")
+
+    steps = [
+        ("1  Species filter",
+         "K. pneumoniae, A. baumannii only",
+         "All other organisms dropped from ATLAS; reduces dataset to target pathogens",
+         False),
+        ("2  Antibiotic filter",
+         "Meropenem MIC rows only",
+         "ATLAS covers 100+ antibiotics; only Meropenem measurements are retained",
+         False),
+        ("3  Censored value imputation",
+         "> ceiling -> ceiling value;  <= floor -> floor / 2",
+         'Example: ">32" -> 32 mg/L;  "<=0.06" -> 0.03 mg/L  (boundary doubling-dilution rule)',
+         False),
+        ("4  log2 transform",
+         "MIC_log2 = log2(MIC_numeric)",
+         "Converts multiplicative doubling dilutions to additive units; target variable for all models",
+         False),
+        ("5  Time-aware split",
+         "Train 2004-2018 / Test 2019-2022",
+         "No shuffling - prevents future data leakage; replicates real-world prospective deployment",
+         False),
+        ("6  Country OHE",
+         "Country -> 64-80 binary dummy columns",
+         "One-hot encoding per species; least-frequent countries collapsed to 'Other'",
+         False),
+        ("7  Age binning",
+         "Paediatric (0-17), Adult (18-60), Elderly (61+)",
+         "Raw age_group strings mapped to 3 ordered bins; adults are the reference category",
+         False),
+        ("8  Specimen mapping",
+         "Free-text source -> 5 categories",
+         "Wound / blood / respiratory / urine / peritoneal; all others -> 'other'",
+         False),
+        ("9  Gene PCR flags",
+         "Binary: KPC_pos, NDM_pos, OXA_pos, VIM_pos, IMP_pos, GES_pos",
+         "Raw PCR text result -> 1/0; NaN treated as 0 (gene not detected / not tested)",
+         False),
+        ("10  Artifact features",
+         "is_censored + pct_censored_year",
+         "DATA ARTIFACTS: per-isolate floor flag and year-level censoring rate; control panel methodology shifts",
+         True),
+    ]
+
+    col_x = [0.35, 3.05, 6.15]
+    col_w = [2.60, 3.00, 6.90]
+    col_labels = ["Step", "Applied As", "Detail / Rationale"]
+
+    # Header row
+    rect(sl, 0.35, 1.52, 12.65, 0.38, DARK)
+    for label, cx, cw in zip(col_labels, col_x, col_w):
+        textbox(sl, cx + 0.08, 1.56, cw - 0.12, 0.30, label,
+                size=13, bold=True, color=WHITE, align=PP_ALIGN.LEFT)
+
+    row_h = 0.50
+    for i, (step_name, applied, detail, is_artifact) in enumerate(steps):
+        y = 1.90 + i * row_h
+        bg = WHITE if i % 2 == 0 else RGBColor(0xF0, 0xF4, 0xF8)
+        rect(sl, 0.35, y, 12.65, row_h, bg)
+        name_color = RED if is_artifact else NAVY
+        detail_color = RED if is_artifact else GRAY
+        textbox(sl, col_x[0] + 0.08, y + 0.06, col_w[0] - 0.12, row_h - 0.10,
+                step_name, size=11, bold=True, color=name_color)
+        textbox(sl, col_x[1] + 0.08, y + 0.06, col_w[1] - 0.12, row_h - 0.10,
+                applied, size=11, color=TEAL)
+        textbox(sl, col_x[2] + 0.08, y + 0.06, col_w[2] - 0.12, row_h - 0.10,
+                detail, size=10, color=detail_color)
+
+    rect(sl, 0.35, 6.90, 12.65, 0.48, RGBColor(0x17, 0x7E, 0x89))
+    textbox(sl, 0.50, 6.93, 12.35, 0.42,
+            "Steps 1-4 are applied before any modelling. "
+            "Step 10 (artifact features) is included explicitly so models learn to correct for panel methodology bias, "
+            "not to use censoring as a biological predictor.",
+            size=11, color=WHITE, italic=True)
+
+
 def slide_08_features(prs):
     """Feature set."""
     sl = blank_slide(prs)
@@ -1227,6 +1309,7 @@ def main():
     slide_11b_specimen_source(prs)
     slide_06_data_quality(prs)
     # --- Methods ---
+    slide_preprocessing(prs)
     slide_08_features(prs)
     slide_07_model(prs)
     slide_07b_tradeoffs(prs)
