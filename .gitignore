@@ -31,4 +31,7 @@ scripts/make_presentation.py
 
 # macOS
 .DS_Store
-**/.DS_Store
+**/.DS_Storenotebooks/01_data_exploration.ipynb
+notebooks/02_eda_temporal_trends.ipynb
+notebooks/03_geographic_antibiotic_profile.ipynb
+notebooks/04_atlas_eda.ipynb
