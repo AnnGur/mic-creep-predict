@@ -25,13 +25,13 @@
 <div class="title-block">
   <h1>MIC Creep Prediction Using Machine Learning</h1>
   <div class="subtitle">Vivli AMR Surveillance Data Challenge 2026</div>
-  <div class="subtitle">Anna Gurina (Technical Lead) &nbsp;|&nbsp; Inna Kucherova (Research Lead / Domain Expert)</div>
-  <div class="subtitle">KSE Introduction to Machine Learning - Group Project</div>
+  <div class="subtitle">Anna Gurina (Technical Lead) &nbsp;|&nbsp; Inna Gurina (Domain Expert)</div>
+  <div class="subtitle">KSE Introduction to Machine Learning &mdash; Group Project</div>
 </div>
 
 <h2>1. Introduction</h2>
 <p>Antibiotic resistance represents one of the most urgent global health threats. The gradual upward drift of
-Minimum Inhibitory Concentration (MIC) values - termed <em>MIC Creep</em> - is an early warning
+Minimum Inhibitory Concentration (MIC) values &mdash; termed <em>MIC Creep</em> &mdash; is an early warning
 signal that precedes full clinical resistance. Because MIC values remain technically &ldquo;susceptible&rdquo;
 while drifting upward, this phenomenon escapes detection by standard clinical breakpoint reporting. This project
 applies machine learning to quantify and predict MIC Creep for <em>Klebsiella pneumoniae</em> and
@@ -48,7 +48,7 @@ nosocomial and frequently carbapenem-resistant at baseline.</p>
 
 <h2>3. Data Sources and Description</h2>
 <p>Source: ATLAS (Antimicrobial Testing Leadership and Surveillance, Pfizer), accessed via the Vivli AMR
-Register under a Data Use Agreement. The dataset spans 2004-2022 across 100+ countries. Raw data are
+Register under a Data Use Agreement. The dataset spans 2004&ndash;2022 across 100+ countries. Raw data are
 stored locally and never committed to version control per Vivli data stewardship terms.</p>
 
 <p class="caption">Table 1. Dataset summary</p>
@@ -56,8 +56,8 @@ stored locally and never committed to version control per Vivli data stewardship
   <tr><th>Parameter</th><th>K. pneumoniae</th><th>A. baumannii</th></tr>
   <tr><td>Total isolates</td><td>89,572</td><td>37,540</td></tr>
   <tr><td>Countries</td><td>81</td><td>79</td></tr>
-  <tr><td>Train period</td><td>2004-2018 (n=61,780)</td><td>2004-2018 (n=23,990)</td></tr>
-  <tr><td>Test period</td><td>2019-2022 (n=27,792)</td><td>2019-2022 (n=13,550)</td></tr>
+  <tr><td>Train period</td><td>2004&ndash;2018 (n=61,780)</td><td>2004&ndash;2018 (n=23,990)</td></tr>
+  <tr><td>Test period</td><td>2019&ndash;2022 (n=27,792)</td><td>2019&ndash;2022 (n=13,550)</td></tr>
   <tr><td>% censored MIC</td><td>~75%</td><td>~10%</td></tr>
   <tr><td>% resistant (MIC &gt; 8 mg/L)</td><td>~7.4%</td><td>~24.7%</td></tr>
 </table>
@@ -75,16 +75,16 @@ before log<sub>2</sub>-transformation. Merck/SMART datasets were excluded per ch
 log<sub>2</sub>(MIC_numeric).</p>
 
 <h3>4.2 Time-Aware Train/Test Split</h3>
-<p>Data is split temporally: 2004-2018 for training, 2019-2022 for testing. Random shuffling is
+<p>Data is split temporally: 2004&ndash;2018 for training, 2019&ndash;2022 for testing. Random shuffling is
 explicitly disabled to prevent future data leakage. This split approximates a real-world deployment scenario
 where the model is trained on historical data and evaluated on unseen future isolates.</p>
 
 <h3>4.3 Models</h3>
 <p>Three models are trained per species, representing a spectrum from interpretable to accurate.
 Linear Regression (interpretable baseline) provides directly readable year coefficients as the MIC creep rate.
-Random Forest (200 trees, sklearn defaults) is a robust non-linear baseline. XGBoost Regressor with
-Optuna hyperparameter tuning (60 trials, 5-fold time-aware cross-validation) is the primary model. All three are
-evaluated on: (a) all test isolates, and (b) the clinically critical resistant subset (MIC &gt; 8 mg/L,
+Random Forest (200 trees, sklearn defaults) is a robust non-linear baseline.
+XGBoost Regressor with Optuna hyperparameter tuning (60 trials, 5-fold time-aware cross-validation) is the primary model.
+All three are evaluated on: (a) all test isolates, and (b) the clinically critical resistant subset (MIC &gt; 8 mg/L,
 per EUCAST breakpoint for Meropenem).</p>
 
 <h3>4.4 Explainability (SHAP)</h3>
@@ -94,24 +94,27 @@ influence. Outputs were validated for biological plausibility by the domain expe
 
 <h2>5. Results</h2>
 
-<p class="caption">Table 2. Model performance on test set (2019-2022)</p>
+<p class="caption">Table 2. Model performance on test set (2019&ndash;2022)</p>
 <table>
   <tr><th>Species</th><th>Model</th><th>RMSE (all)</th><th>MAE (all)</th><th>R&sup2; (all)</th><th>RMSE (R)</th><th>MAE (R)</th></tr>
-  <tr><td>K. pneumoniae</td><td>Linear Regression</td><td>~2.10</td><td>~1.65</td><td>~0.05</td><td>~4.18</td><td>~3.40</td></tr>
+  <tr><td>K. pneumoniae</td><td>Linear Regression</td><td>1.836</td><td>1.074</td><td>N/A*</td><td>3.839</td><td>2.922</td></tr>
   <tr><td>K. pneumoniae</td><td>Random Forest</td><td>1.558</td><td>1.109</td><td>0.21</td><td>2.869</td><td>2.180</td></tr>
   <tr><td>K. pneumoniae</td><td>XGBoost Tuned</td><td>1.758</td><td>1.002</td><td>&minus;0.01</td><td>1.960</td><td>1.127</td></tr>
-  <tr><td>A. baumannii</td><td>Linear Regression</td><td>~1.72</td><td>~1.20</td><td>~0.08</td><td>~1.38</td><td>~0.92</td></tr>
+  <tr><td>A. baumannii</td><td>Linear Regression</td><td>1.448</td><td>1.010</td><td>N/A*</td><td>1.023</td><td>0.729</td></tr>
   <tr><td>A. baumannii</td><td>Random Forest</td><td>1.338</td><td>0.789</td><td>0.46</td><td>0.983</td><td>0.510</td></tr>
   <tr><td>A. baumannii</td><td>XGBoost Tuned</td><td>1.379</td><td>0.707</td><td>0.43</td><td>0.748</td><td>0.270</td></tr>
 </table>
 
-<p><em>RMSE (R) = RMSE on resistant isolates only (MIC &gt; 8 mg/L, n = 4,588 for K. pneu; n = 9,272 for A. bau).
-Linear Regression values are estimated from pre-computed fallback pending full pipeline run.</em></p>
+<p><em>RMSE (R) = RMSE on resistant isolates only (MIC &gt; 8 mg/L).
+*LR R&sup2; not directly comparable to RF/XGB R&sup2; due to test-set filtering differences in pipelines.</em></p>
 
 <p>For <em>K. pneumoniae</em>, the bimodal MIC distribution (~75% at censoring floor) causes R&sup2; near zero
 on the full set; the resistant-subset RMSE is the clinically meaningful metric. XGBoost significantly
-outperforms both Linear Regression and Random Forest on the resistant subset:
-<em>K. pneumoniae</em> RMSE 1.960 vs 2.869 vs ~4.18; <em>A. baumannii</em> RMSE 0.748 vs 0.983 vs ~1.38.</p>
+outperforms both LR and RF on the resistant subset:
+<em>K. pneumoniae</em> RMSE 1.960 vs 2.869 vs 3.839; <em>A. baumannii</em> RMSE 0.748 vs 0.983 vs 1.023.</p>
+<p>The LR year coefficient is slightly negative after controlling for carbapenemase genes, country, and specimen
+type (&minus;0.0016 log&#x2082; units/yr for <em>K. pneumoniae</em>), indicating that most of the observable
+temporal MIC drift is mechanistically explained by rising gene prevalence (KPC, NDM) rather than time alone.</p>
 
 <p>Top SHAP features (both species): <em>year</em>, <em>pct_censored_year</em>, <em>is_censored</em>,
 <em>country</em>, <em>specimen_type</em>. The year feature shows a consistent positive SHAP contribution in
@@ -120,13 +123,13 @@ demographic factors.</p>
 
 <h2>6. Discussion</h2>
 <p>For <em>K. pneumoniae</em>, the extremely high proportion of censored MIC values (~75%) produces a bimodal
-distribution that limits overall R&sup2;. This is a data artifact, not a modeling failure  - most isolates
+distribution that limits overall R&sup2;. This is a data artifact, not a modeling failure &mdash; most isolates
 cannot be resolved to a precise MIC by the assay panel. The resistant subset (7.4% of isolates) shows
 meaningful predictive signal (RMSE 1.96 log<sub>2</sub>-units with XGBoost).</p>
 
 <p>For <em>A. baumannii</em>, the substantially higher resistance prevalence (24.7%) and lower censoring rate
 produce much cleaner signal. XGBoost achieves RMSE 0.748 on resistant isolates, approaching one doubling
-dilution precision  - clinically actionable accuracy.</p>
+dilution precision &mdash; clinically actionable accuracy.</p>
 
 <p><strong>Limitations:</strong></p>
 <ul>
@@ -141,7 +144,7 @@ dilution precision  - clinically actionable accuracy.</p>
 <p>This project demonstrates that machine learning can detect and quantify MIC Creep in large-scale AMR
 surveillance datasets. XGBoost with time-aware validation achieves clinically meaningful accuracy on resistant
 isolates, particularly for <em>A. baumannii</em> (RMSE 0.748 log<sub>2</sub>-units). The deployed pipeline
- - from raw ATLAS CSV to JSON API artefacts  - runs end-to-end via a single bash script
+&mdash; from raw ATLAS CSV to JSON API artefacts &mdash; runs end-to-end via a single bash script
 (<code>run_all.sh</code>). The interactive dashboard (Vercel + FastAPI on Render) provides a public-facing
 interface for trend visualization without exposing any raw isolate-level data.</p>
 
@@ -165,8 +168,8 @@ outputs, group definitions (military/paediatric proxies), clinical plausibility 
 
 <h2>10. References</h2>
 <ul>
-  <li>Pfizer ATLAS. Antimicrobial Testing Leadership and Surveillance. Vivli AMR Register, 2004-2022.</li>
-  <li>EUCAST. Clinical Breakpoints  - Bacteria v14.0. European Committee on Antimicrobial Susceptibility
+  <li>Pfizer ATLAS. Antimicrobial Testing Leadership and Surveillance. Vivli AMR Register, 2004&ndash;2022.</li>
+  <li>EUCAST. Clinical Breakpoints &mdash; Bacteria v14.0. European Committee on Antimicrobial Susceptibility
       Testing, 2024.</li>
   <li>Chen T, Guestrin C. XGBoost: A Scalable Tree Boosting System. KDD 2016.</li>
   <li>Lundberg SM, Lee S-I. A Unified Approach to Interpreting Model Predictions. NeurIPS 2017.</li>
