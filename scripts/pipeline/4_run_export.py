@@ -29,6 +29,7 @@ print("Importing libraries...", flush=True)
 import joblib
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 
 SPECIES_MAP = {
     "kpneumoniae": "Klebsiella pneumoniae",
@@ -67,7 +68,23 @@ def load(data_dir: Path, model_suffix: str) -> tuple:
 # 1. MIC90 trend — actual (train), predicted (test), forecast (2023+)
 # ---------------------------------------------------------------------------
 
-def export_mic90_trend(X_train, y_train, X_test, y_test, model) -> None:
+def train_pr_classifier(X_train: pd.DataFrame, y_train: pd.Series, params: dict) -> xgb.XGBClassifier:
+    """Train P(R) binary XGBoost classifier using regression hyperparams as structural priors."""
+    p = params.copy()
+    n_est = int(p.pop("n_estimators", 500))
+    clf = xgb.XGBClassifier(
+        n_estimators=n_est,
+        objective="binary:logistic",
+        eval_metric="logloss",
+        seed=42,
+        verbosity=0,
+        **p,
+    )
+    clf.fit(X_train.values, (y_train.values >= LOG2_R).astype(int))
+    return clf
+
+
+def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None) -> None:
     records = {}
 
     train_df = X_train[["year"]].copy()
@@ -83,11 +100,14 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model) -> None:
         }
 
     test_pred = model.predict(X_test)
+    test_prob = clf.predict_proba(X_test.values)[:, 1] if clf is not None else None
     test_df = X_test[["year"]].copy()
     test_df["log2_mic_actual"]    = y_test.values
     test_df["log2_mic_predicted"] = test_pred
+    if test_prob is not None:
+        test_df["prob_resistant"] = test_prob
     for yr, g in test_df.groupby("year"):
-        records[int(yr)] = {
+        rec = {
             "year":               int(yr),
             "actual_mic90":       round(float(2 ** g["log2_mic_actual"].quantile(0.90)), 4),
             "predicted_mic90":    round(float(2 ** g["log2_mic_predicted"].quantile(0.90)), 4),
@@ -98,6 +118,9 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model) -> None:
             "n":                  int(len(g)),
             "source":             "test_actual_and_predicted",
         }
+        if clf is not None:
+            rec["pct_resistant_prob"] = round(float(g["prob_resistant"].mean() * 100), 2)
+        records[int(yr)] = rec
 
     anchor_log2 = np.log2(records[2022]["predicted_mic90"])
     for yr in range(2023, 2027):
@@ -248,8 +271,15 @@ def main() -> None:
     X_train, y_train, X_test, y_test, model, feature_names = load(data_dir, model_suffix)
     print(f"  Train: {len(X_train):,} rows  Test: {len(X_test):,} rows")
 
+    params_path = MODELS_DIR / f"xgb_best_params_{args.species}.json"
+    clf = None
+    if params_path.exists():
+        params = json.loads(params_path.read_text())
+        print("  Training P(R) classifier...")
+        clf = train_pr_classifier(X_train, y_train, params)
+
     print(f"\n[2/{n}] MIC90 trend (actual + predicted + forecast)")
-    export_mic90_trend(X_train, y_train, X_test, y_test, model)
+    export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf)
 
     print(f"\n[3/{n}] Country stats + censoring lookup")
     export_country_stats(X_test, y_test, model)

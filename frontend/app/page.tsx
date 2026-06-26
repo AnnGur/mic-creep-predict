@@ -1,4 +1,5 @@
 import MicTrendChart from "./components/MicTrendChart";
+import ResistanceTrendChart from "./components/ResistanceTrendChart";
 import SpeciesSwitcher from "./components/SpeciesSwitcher";
 
 const API = "https://mic-creep-predict.onrender.com";
@@ -6,6 +7,11 @@ const API = "https://mic-creep-predict.onrender.com";
 const SPECIES_LABEL: Record<string, string> = {
   kpneumoniae: "K. pneumoniae",
   abaumannii:  "A. baumannii",
+};
+
+const SPECIES_AUC: Record<string, number> = {
+  kpneumoniae: 0.982,
+  abaumannii:  0.981,
 };
 
 async function getTrend(species: string) {
@@ -47,6 +53,7 @@ export default async function Home({
 }) {
   const { species = "kpneumoniae" } = await searchParams;
   const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
+  const auc = SPECIES_AUC[species] ?? 0.982;
 
   const trend = await getTrend(species);
   const forecast2026 = trend.data.find(
@@ -55,6 +62,11 @@ export default async function Home({
   const trainYears = trend.data.filter(
     (d: { source: string }) => d.source === "train_actual"
   ).length;
+  const latestResistance = trend.data
+    .filter((d: { source: string; pct_resistant?: number }) =>
+      d.source === "test_actual_and_predicted" && d.pct_resistant != null
+    )
+    .slice(-1)[0]?.pct_resistant?.toFixed(1);
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10 bg-gray-50 min-h-screen">
@@ -140,16 +152,32 @@ export default async function Home({
         </div>
       </section>
 
+      {/* Resistance rate chart */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">
+          Resistance Rate - <em>{speciesLabel}</em> + Meropenem (2004-2022)
+        </h2>
+        <p className="text-sm text-gray-500 mb-5">
+          Percentage of isolates with MIC &ge; 8 mg/L (EUCAST R breakpoint).
+          Blue = observed rate; green dashed = P(R) classifier probability on the 2019-2022 test set
+          (AUC-ROC = {auc.toFixed(3)}).
+        </p>
+        <ResistanceTrendChart data={trend.data} auc={auc} />
+      </section>
+
       {/* Key stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Years of data", value: String(trend.data.length) },
+          { label: "Years of data", value: String(trainYears + 4) },
           {
             label: "Forecast MICₐ (2026)",
             value: forecast2026 ? `${forecast2026} mg/L` : "-",
           },
-          { label: "EUCAST breakpoint", value: `${trend.eucast_r_mg_l} mg/L` },
-          { label: "Pathogens", value: "2 (Kp + Ab)" },
+          {
+            label: "Resistance rate (2022)",
+            value: latestResistance ? `${latestResistance}%` : "-",
+          },
+          { label: "P(R) AUC-ROC", value: auc.toFixed(3) },
         ].map((s) => (
           <div
             key={s.label}

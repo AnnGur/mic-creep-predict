@@ -142,12 +142,12 @@ def main():
     print(f"  Train: {X_train.shape[0]:,} rows x {X_train.shape[1]} features")
     print(f"  Test:  {X_test.shape[0]:,} rows")
 
-    # Drop is_censored — collinear with left_mask; Tobit handles censoring in likelihood
-    X_train = drop_tobit_incompatible(X_train)
-    X_test  = drop_tobit_incompatible(X_test)
-
     print("\n[2/4] Building censoring masks (train)...")
     left_mask, right_mask = build_censoring_masks(X_train, y_train)
+
+    # Drop is_censored AFTER building masks — collinear with left_mask
+    X_train = drop_tobit_incompatible(X_train)
+    X_test  = drop_tobit_incompatible(X_test)
 
     # Scale features for well-conditioned gradients
     X_tr_sc, X_te_sc, scale_mean, scale_std = scale_features(
