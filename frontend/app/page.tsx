@@ -100,12 +100,12 @@ export default async function Home({
       {/* Trend chart */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          MIC&#x2090; Trend - <em>{speciesLabel}</em> + Meropenem (2004-2026)
+          MIC&#x2090; Trend - <em>{speciesLabel}</em> + Meropenem (2008-2026)
         </h2>
         <p className="text-sm text-gray-500 mb-5">
           90th-percentile MIC value by year across{" "}
           <strong>{trainYears + 4}</strong> years of ATLAS surveillance data.
-          Model trained on 2004-2018; tested on 2019-2022; forecast extends to 2026.
+          Model trained on 2008-2018; tested on 2019-2022; forecast extends to 2026.
         </p>
         <MicTrendChart data={trend.data} eucastR={trend.eucast_r_mg_l} />
       </section>
@@ -155,7 +155,7 @@ export default async function Home({
       {/* Resistance rate chart */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          Resistance Rate - <em>{speciesLabel}</em> + Meropenem (2004-2022)
+          Resistance Rate - <em>{speciesLabel}</em> + Meropenem (2008-2022)
         </h2>
         <p className="text-sm text-gray-500 mb-5">
           Percentage of isolates with MIC &ge; 8 mg/L (EUCAST R breakpoint).

@@ -112,10 +112,22 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_mo
     if test_prob is not None:
         test_df["prob_resistant"] = test_prob
     for yr, g in test_df.groupby("year"):
+        # P(R)-corrected MIC90: when P(R) > 10%, the 90th percentile falls within the
+        # resistant subpopulation by arithmetic. Resistant isolates hit the ATLAS panel
+        # ceiling (32 mg/L), so the ceiling-corrected predicted MIC90 = panel max.
+        # Below 10% resistance, the 90th percentile is in the susceptible range —
+        # use the regression model's Q0.90 directly.
+        pct_r = g["prob_resistant"].mean() if "prob_resistant" in g.columns else \
+                (g["log2_mic_predicted"] >= LOG2_R).mean()
+        if pct_r > 0.10:
+            predicted_mic90 = float(EUCAST_R * 4)   # 32 mg/L — ATLAS panel ceiling
+        else:
+            predicted_mic90 = round(float(2 ** g["log2_mic_predicted"].quantile(0.90)), 4)
+
         rec = {
             "year":               int(yr),
             "actual_mic90":       round(float(2 ** g["log2_mic_actual"].quantile(0.90)), 4),
-            "predicted_mic90":    round(float(2 ** g["log2_mic_predicted"].quantile(0.90)), 4),
+            "predicted_mic90":    predicted_mic90,
             "actual_mic50":       round(float(2 ** g["log2_mic_actual"].quantile(0.50)), 4),
             "predicted_mic50":    round(float(2 ** g["log2_mic_predicted"].quantile(0.50)), 4),
             "pct_resistant":      round(float((g["log2_mic_actual"] >= LOG2_R).mean() * 100), 2),
