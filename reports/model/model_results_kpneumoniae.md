@@ -1,12 +1,12 @@
 # Model Training Results — K. pneumoniae + Meropenem
-**Generated**: 2026-06-29 13:38
+**Generated**: 2026-06-29 16:09
 ---
 ## Evaluation Metrics
 | Model | RMSE (all) | MAE (all) | R2 (all) | RMSE (R subset) | MAE (R subset) | N resistant |
 |---|---|---|---|---|---|---|
-| RF baseline | 1.7938 | 1.1502 | 0.7609 | 3.1124 | 2.4026 | 4,305 |
-| XGBoost tuned | 1.8681 | 1.3826 | 0.7406 | 2.3821 | 1.4421 | 4,305 |
-| XGBoost Q0.90 | 3.0968 | 2.4251 | 0.2873 | 1.3644 | 0.7308 | 4,305 |
+| RF baseline | 1.7750 | 1.1265 | 0.7659 | 3.0528 | 2.2768 | 4,305 |
+| XGBoost tuned | 1.8998 | 1.4221 | 0.7318 | 2.4086 | 1.4916 | 4,305 |
+| XGBoost Q0.90 | 3.1533 | 2.5031 | 0.2611 | 1.4452 | 0.8929 | 4,305 |
 
 > **Note**: RMSE on the resistant subset (MIC >= 8 mg/L) is the clinically relevant metric. The full-set RMSE is dominated by the ~75% of isolates imputed at the censoring floor (log2=-5).
 
@@ -42,15 +42,15 @@
 
 ```json
 {
-  "n_estimators": 400,
-  "max_depth": 5,
-  "learning_rate": 0.012047313045711654,
-  "subsample": 0.6827050210852758,
-  "colsample_bytree": 0.8880723309391383,
-  "min_child_weight": 12,
-  "gamma": 0.8757300090772471,
-  "reg_alpha": 2.8208074066356317,
-  "reg_lambda": 2.02479393508185
+  "n_estimators": 600,
+  "max_depth": 4,
+  "learning_rate": 0.010612878172829193,
+  "subsample": 0.7146163616857919,
+  "colsample_bytree": 0.6902785247460157,
+  "min_child_weight": 6,
+  "gamma": 0.165830636381099,
+  "reg_alpha": 3.779781487252998,
+  "reg_lambda": 7.758354287759749
 }
 ```
 

@@ -38,6 +38,12 @@ TEST_START  = 2019
 TEST_END    = 2022
 
 
+def get_keep_countries(df: pd.DataFrame, min_n: int = 50) -> set:
+    """Return set of countries with at least min_n isolates (compute from training set only)."""
+    counts = df["Country"].value_counts()
+    return set(counts[counts >= min_n].index)
+
+
 def map_ward(speciality: str) -> str:
     if pd.isna(speciality):
         return "general"
@@ -54,13 +60,18 @@ def map_specimen(source: str) -> str:
     return "other"
 
 
-def build_features(df: pd.DataFrame) -> pd.DataFrame:
+def build_features(df: pd.DataFrame, keep_countries: set = None) -> pd.DataFrame:
     """
     Build feature matrix from parsed ATLAS dataframe.
 
     Input df must have columns produced by load_and_parse():
       Year, Gender, Age Group, Source, Country, military_proxy,
       is_censored, mic_log2, and optional {gene}_pos columns.
+
+    keep_countries: set of country names to retain as individual OHE columns.
+      Countries outside this set are collapsed to "Other". Compute from
+      training data via get_keep_countries(); pass the same set for test.
+      If None, all countries are encoded individually (legacy behaviour).
 
     Returns feature matrix X (all float/int, no target column).
     """
@@ -90,8 +101,16 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
         ward_dummies = ward_dummies.drop(columns=["ward_general"], errors="ignore")
         X = pd.concat([X, ward_dummies.set_index(df.index)], axis=1)
 
-    # --- Country (OHE, drop first to avoid multicollinearity) ---
-    country_dummies = pd.get_dummies(df["Country"], prefix="ctry", drop_first=True)
+    # --- Country (OHE) ---
+    # Countries with fewer than min_n isolates in the training set are collapsed
+    # to "ctry_Other" to reduce OHE noise from sparse entries.
+    if keep_countries is not None:
+        country_col = df["Country"].apply(
+            lambda c: c if c in keep_countries else "Other"
+        )
+    else:
+        country_col = df["Country"]
+    country_dummies = pd.get_dummies(country_col, prefix="ctry", drop_first=True)
     X = pd.concat([X, country_dummies.set_index(df.index)], axis=1)
 
     # --- Resistance gene flags ---
@@ -134,15 +153,17 @@ def time_split(
     return train, test
 
 
-def run_pipeline(df: pd.DataFrame, out_dir: Path) -> None:
+def run_pipeline(df: pd.DataFrame, out_dir: Path, min_country_n: int = 50) -> None:
     """
     Full feature engineering pipeline:
       1. Time-split
-      2. Build X, y for train and test
-      3. Save to out_dir as parquet
+      2. Compute keep_countries from training set (countries with >= min_country_n isolates)
+      3. Build X, y for train and test using the same country mapping
+      4. Save to out_dir as parquet + keep_countries.json
 
     Never shuffles data.
     """
+    import json
     out_dir.mkdir(parents=True, exist_ok=True)
 
     train_df, test_df = time_split(df)
@@ -150,9 +171,15 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path) -> None:
     print(f"  Train: {len(train_df):,} rows  ({TRAIN_START}-{TRAIN_END})")
     print(f"  Test:  {len(test_df):,} rows  ({TEST_START}-{TEST_END})")
 
-    X_train = build_features(train_df)
+    keep_countries = get_keep_countries(train_df, min_n=min_country_n)
+    n_total = train_df["Country"].nunique()
+    n_collapsed = n_total - len(keep_countries)
+    print(f"  Countries kept (n>={min_country_n}): {len(keep_countries)}/{n_total} "
+          f"({n_collapsed} collapsed to 'Other')")
+
+    X_train = build_features(train_df, keep_countries=keep_countries)
     y_train = build_target(train_df)
-    X_test  = build_features(test_df)
+    X_test  = build_features(test_df, keep_countries=keep_countries)
     y_test  = build_target(test_df)
 
     print(f"  Feature matrix shape: {X_train.shape[1]} columns")
@@ -162,5 +189,8 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path) -> None:
     y_train.to_frame().to_parquet(out_dir / "y_train.parquet")
     X_test.to_parquet(out_dir / "X_test.parquet")
     y_test.to_frame().to_parquet(out_dir / "y_test.parquet")
+    (out_dir / "keep_countries.json").write_text(
+        json.dumps(sorted(keep_countries), indent=2)
+    )
 
     print(f"  Saved to: {out_dir}")

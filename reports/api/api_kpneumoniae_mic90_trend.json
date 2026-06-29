@@ -92,48 +92,48 @@
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 0.03,
-    "predicted_mic50": 0.0568,
+    "predicted_mic50": 0.0593,
     "pct_resistant": 14.87,
-    "pct_resistant_pred": 13.72,
+    "pct_resistant_pred": 11.67,
     "n": 6160,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 15.11
+    "pct_resistant_prob": 15.04
   },
   {
     "year": 2020,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 0.03,
-    "predicted_mic50": 0.0546,
+    "predicted_mic50": 0.0582,
     "pct_resistant": 15.22,
-    "pct_resistant_pred": 14.38,
+    "pct_resistant_pred": 13.43,
     "n": 6753,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 15.99
+    "pct_resistant_prob": 15.97
   },
   {
     "year": 2021,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 0.03,
-    "predicted_mic50": 0.0584,
+    "predicted_mic50": 0.0611,
     "pct_resistant": 18.07,
-    "pct_resistant_pred": 16.05,
+    "pct_resistant_pred": 14.42,
     "n": 7176,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 17.82
+    "pct_resistant_prob": 17.81
   },
   {
     "year": 2022,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 0.03,
-    "predicted_mic50": 0.0568,
+    "predicted_mic50": 0.0611,
     "pct_resistant": 16.14,
-    "pct_resistant_pred": 15.94,
+    "pct_resistant_pred": 13.79,
     "n": 6592,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 17.86
+    "pct_resistant_prob": 17.64
   },
   {
     "year": 2023,

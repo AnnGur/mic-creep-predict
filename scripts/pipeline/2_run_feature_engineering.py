@@ -36,6 +36,7 @@ from features.engineer import (
     TEST_START,
     TEST_END,
     build_features,
+    get_keep_countries,
     build_target,
     map_specimen,
     run_pipeline,
@@ -262,9 +263,10 @@ def main() -> None:
 
     print(f"\n[3/{n}] Build features + time split")
     train_df, test_df = time_split(df)
-    X_train = build_features(train_df)
+    keep_countries = get_keep_countries(train_df, min_n=50)
+    X_train = build_features(train_df, keep_countries=keep_countries)
     y_train = build_target(train_df)
-    X_test  = build_features(test_df)
+    X_test  = build_features(test_df, keep_countries=keep_countries)
     y_test  = build_target(test_df)
     print_feature_summary(X_train, X_test)
 
