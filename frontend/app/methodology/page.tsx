@@ -123,33 +123,31 @@ export default function MethodologyPage() {
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
         <h2 className="text-xl font-semibold text-gray-800">Models and Tradeoffs</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Three models are trained independently for each species, representing a spectrum
-          from maximally interpretable to maximally accurate.
+          Two models are trained independently for each species, representing a spectrum
+          from interpretable baseline to maximum accuracy on the clinically relevant resistant tail.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-800 text-white">
                 <th className="px-3 py-2 text-left font-medium">Criterion</th>
-                <th className="px-3 py-2 text-center font-medium">Linear Regression</th>
                 <th className="px-3 py-2 text-center font-medium">Random Forest</th>
                 <th className="px-3 py-2 text-center font-medium">XGBoost Tuned</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {[
-                ["Model type", "Interpretable baseline", "Advanced baseline", "Primary model"],
-                ["Interpretability", "Highest - year coefficient = MIC creep rate directly", "High - feature importances", "Moderate - requires SHAP"],
-                ["Complexity", "Low - single linear equation", "Moderate - 200 parallel trees", "High - boosted ensemble + Optuna tuning"],
-                ["Captures non-linearities", "No", "Yes", "Yes"],
-                ["Hyperparameter tuning", "None", "n_estimators=200, sklearn defaults", "60 Optuna trials, time-aware CV"],
-                ["Sample weighting", "None", "3x weight on resistant isolates", "3x weight on resistant isolates"],
-                ["Key strength", "Directly readable coefficients", "Stable, interpretable, good R2", "Best RMSE on resistant subset"],
-                ["Key weakness", "Cannot capture gene-country interactions", "Weaker on resistant tail", "Black-box without SHAP"],
-              ].map(([criterion, lr, rf, xgb]) => (
+                ["Model type", "Advanced baseline", "Primary model"],
+                ["Interpretability", "High - feature importances", "Moderate - requires SHAP"],
+                ["Complexity", "Moderate - 200 parallel trees", "High - boosted ensemble + Optuna tuning"],
+                ["Captures non-linearities", "Yes", "Yes"],
+                ["Hyperparameter tuning", "n_estimators=200, sklearn defaults", "60 Optuna trials, time-aware CV"],
+                ["Sample weighting", "3x weight on resistant isolates", "3x weight on resistant isolates"],
+                ["Key strength", "Stable, interpretable, good R2", "Best RMSE on resistant subset"],
+                ["Key weakness", "Weaker on resistant tail", "Black-box without SHAP"],
+              ].map(([criterion, rf, xgb]) => (
                 <tr key={criterion} className="even:bg-gray-50">
                   <td className="px-3 py-2 text-gray-700 font-medium text-xs">{criterion}</td>
-                  <td className="px-3 py-2 text-gray-600 text-center text-xs">{lr}</td>
                   <td className="px-3 py-2 text-gray-600 text-center text-xs">{rf}</td>
                   <td className="px-3 py-2 text-gray-600 text-center text-xs">{xgb}</td>
                 </tr>
@@ -159,9 +157,8 @@ export default function MethodologyPage() {
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
           <strong>Tradeoff conclusion:</strong> XGBoost achieves the best RMSE on the clinically
-          critical resistant subset (MIC &gt; 8 mg/L). Linear Regression provides directly readable
-          MIC creep rate coefficients. Random Forest balances accuracy and transparency for regulatory
-          or audit contexts. All three are trained and evaluated identically.
+          critical resistant subset (MIC &gt; 8 mg/L). Random Forest balances accuracy and
+          transparency for regulatory or audit contexts. Both are trained and evaluated identically.
         </div>
       </section>
 

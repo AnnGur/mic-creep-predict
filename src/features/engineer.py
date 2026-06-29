@@ -18,6 +18,7 @@ SPECIMEN_KEYWORDS = {
     "peritoneal":  ["periton", "abdomin", "ascit", "gall"],
 }
 
+TRAIN_START = 2008
 TRAIN_END   = 2018
 TEST_START  = 2019
 TEST_END    = 2022
@@ -73,7 +74,8 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
             X[col] = df[col].astype(int)
 
     # --- Data quality / censoring ---
-    X["is_censored"] = df["is_censored"].astype(int)
+    # is_censored dropped: it is collinear with low-MIC imputed values and
+    # dominated SHAP for both species (artifact, not biology).
     yearly_cens = df.groupby("Year")["is_censored"].mean()
     X["pct_censored_year"] = df["Year"].map(yearly_cens).values
 
@@ -90,16 +92,17 @@ def build_target(df: pd.DataFrame) -> pd.Series:
 
 def time_split(
     df: pd.DataFrame,
+    train_start: int = TRAIN_START,
     train_end: int = TRAIN_END,
     test_start: int = TEST_START,
     test_end: int = TEST_END,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Split dataframe chronologically — never shuffle.
+    Split dataframe chronologically - never shuffle.
 
     Returns (train_df, test_df).
     """
-    train = df[df["Year"] <= train_end].copy()
+    train = df[(df["Year"] >= train_start) & (df["Year"] <= train_end)].copy()
     test  = df[(df["Year"] >= test_start) & (df["Year"] <= test_end)].copy()
     return train, test
 
@@ -117,8 +120,8 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path) -> None:
 
     train_df, test_df = time_split(df)
 
-    print(f"  Train: {len(train_df):,} rows  ({df['Year'].min()}–{TRAIN_END})")
-    print(f"  Test:  {len(test_df):,} rows  ({TEST_START}–{TEST_END})")
+    print(f"  Train: {len(train_df):,} rows  ({TRAIN_START}-{TRAIN_END})")
+    print(f"  Test:  {len(test_df):,} rows  ({TEST_START}-{TEST_END})")
 
     X_train = build_features(train_df)
     y_train = build_target(train_df)

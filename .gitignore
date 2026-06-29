@@ -1,5 +1,5 @@
-# Data
-data/
+# Data (raw/processed - local only, never committed)
+/data/
 *.csv
 *.xlsx
 

@@ -1,11 +1,12 @@
 # Model Training Results — A. baumannii + Meropenem
-**Generated**: 2026-06-14 20:59
+**Generated**: 2026-06-29 11:39
 ---
 ## Evaluation Metrics
-| Model | RMSE (all) | MAE (all) | RMSE (R subset) | MAE (R subset) | N resistant |
-|---|---|---|---|---|---|
-| RF baseline | 1.3383 | 0.7891 | 0.9832 | 0.5100 | 9,415 |
-| XGBoost tuned | 1.3789 | 0.7074 | 0.7481 | 0.2698 | 9,415 |
+| Model | RMSE (all) | MAE (all) | R2 (all) | RMSE (R subset) | MAE (R subset) | N resistant |
+|---|---|---|---|---|---|---|
+| Linear Regression (interpretable) | 2.6335 | 2.0439 | 0.2610 | 1.6541 | 1.3672 | 9,415 |
+| RF baseline | 2.6129 | 2.0735 | 0.2725 | 1.7346 | 1.4500 | 9,415 |
+| XGBoost tuned | 2.7286 | 1.7518 | 0.2067 | 1.1275 | 0.7045 | 9,415 |
 
 > **Note**: RMSE on the resistant subset (MIC >= 8 mg/L) is the clinically relevant metric. The full-set RMSE is dominated by the ~75% of isolates imputed at the censoring floor (log2=-5).
 
@@ -41,15 +42,15 @@
 
 ```json
 {
-  "n_estimators": 400,
-  "max_depth": 5,
-  "learning_rate": 0.04402558816902642,
-  "subsample": 0.6186035194493451,
-  "colsample_bytree": 0.728696503325334,
-  "min_child_weight": 2,
-  "gamma": 1.6316117995624455,
-  "reg_alpha": 3.034361067969938,
-  "reg_lambda": 4.172226195617825
+  "n_estimators": 1200,
+  "max_depth": 7,
+  "learning_rate": 0.029744597173878992,
+  "subsample": 0.7375653847768968,
+  "colsample_bytree": 0.739030572726955,
+  "min_child_weight": 7,
+  "gamma": 1.9144185603877224,
+  "reg_alpha": 4.738179660045682,
+  "reg_lambda": 5.764295442201324
 }
 ```
 
