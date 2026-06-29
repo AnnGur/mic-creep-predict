@@ -10,10 +10,12 @@ REPO_ID    = "AnnGur/mic-creep-kpneumoniae"
 MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 FILES = [
-    ("xgb_tuned_kpneumoniae.pkl",    "xgb_tuned_kpneumoniae.pkl"),
-    ("feature_names_kpneumoniae.json","feature_names_kpneumoniae.json"),
-    ("xgb_tuned_abaumannii.pkl",     "xgb_tuned_abaumannii.pkl"),
-    ("feature_names_abaumannii.json", "feature_names_abaumannii.json"),
+    ("xgb_tuned_kpneumoniae.pkl",      "xgb_tuned_kpneumoniae.pkl"),
+    ("xgb_quantile_kpneumoniae.pkl",   "xgb_quantile_kpneumoniae.pkl"),
+    ("feature_names_kpneumoniae.json", "feature_names_kpneumoniae.json"),
+    ("xgb_tuned_abaumannii.pkl",       "xgb_tuned_abaumannii.pkl"),
+    ("xgb_quantile_abaumannii.pkl",    "xgb_quantile_abaumannii.pkl"),
+    ("feature_names_abaumannii.json",  "feature_names_abaumannii.json"),
 ]
 
 api = HfApi()
