@@ -99,6 +99,7 @@ export default function MethodologyPage() {
                 ["age_paediatric / age_elderly", "Binary", "Age group (adult is reference)"],
                 ["military_proxy", "Binary", "Wound + male + 18-60 - combat infection proxy"],
                 ["spec_wound / blood / respiratory / urine / peritoneal", "OHE (5)", "Specimen source"],
+                ["ward_icu / ward_emergency / ward_surgical / ward_paediatric_ward / ward_clinic", "OHE (5)", "Hospital setting (general ward is reference) - top SHAP driver for A. baumannii"],
                 ["ctry_* (64-80 cols)", "OHE", "Country of isolation"],
                 ["KPC_pos, NDM_pos, OXA_pos, VIM_pos, IMP_pos, GES_pos", "Binary x6", "Carbapenemase gene PCR results"],
                 ["pct_censored_year", "Float", "Annual censoring rate - methodology control for panel artifact"],
@@ -113,7 +114,7 @@ export default function MethodologyPage() {
           </table>
         </div>
         <p className="text-xs text-gray-500">
-          Total: 85 features per species (country dummy counts vary slightly). Pre-2008 years
+          Total: 90 features per species (country dummy counts vary slightly). Pre-2008 years
           excluded from training due to sparse sampling (n &lt; 4,000/year). The time split is
           strictly chronological - 2008-2018 train, 2019-2022 test, never shuffled.
         </p>
@@ -159,6 +160,52 @@ export default function MethodologyPage() {
           <strong>Tradeoff conclusion:</strong> XGBoost achieves the best RMSE on the clinically
           critical resistant subset (MIC &gt; 8 mg/L). Random Forest balances accuracy and
           transparency for regulatory or audit contexts. Both are trained and evaluated identically.
+        </div>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
+          <strong>XGBoost Quantile model (Q0.90):</strong> A third model is trained with{" "}
+          <code className="bg-white border border-gray-200 px-1 rounded">objective=&quot;reg:quantileerror&quot;,
+          quantile_alpha=0.9</code> using the same Optuna-tuned hyperparameters as the mean model.
+          It directly optimises the 90th-percentile loss and is used for per-patient worst-case
+          endpoint prediction. It is not used for the year-level MIC&#x2090; trend chart (see
+          Population-level MIC&#x2090; Estimation below).
+        </div>
+      </section>
+
+      {/* P(R)-corrected MIC90 */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
+        <h2 className="text-xl font-semibold text-gray-800">Population-level MIC&#x2090; Estimation</h2>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Year-level MIC&#x2090; is the 90th-percentile MIC across all isolates collected in a given year.
+          Naively taking the 90th percentile of individual regression predictions underestimates this value
+          for species with a bimodal MIC distribution (susceptible floor + resistant ceiling).
+        </p>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          We use a <strong>P(R)-corrected ceiling estimate</strong>:
+        </p>
+        <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside leading-relaxed">
+          <li>
+            A logistic classifier is trained on the same features to predict{" "}
+            <strong>P(R)</strong> - the probability that each isolate is resistant (MIC &gt; 8 mg/L).
+          </li>
+          <li>
+            If the mean P(R) for a given year exceeds 10%, the 90th percentile of the MIC
+            distribution falls arithmetically within the resistant subpopulation.
+          </li>
+          <li>
+            Resistant isolates in ATLAS are censored at the panel ceiling (32 mg/L for meropenem).
+            Therefore, when P(R) &gt; 10%, predicted MIC&#x2090; = 32 mg/L.
+          </li>
+          <li>
+            Below 10% resistance, predicted MIC&#x2090; = Q0.90 of individual regression predictions directly.
+          </li>
+        </ol>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+          <strong>Why not use the quantile model here?</strong> The Q0.90 regression model predicts the
+          90th percentile of the log&#x2082;(MIC) distribution for individual isolates. Aggregating these
+          per-isolate Q0.90 predictions with a median across a year does not recover the population
+          MIC&#x2090; - it gives the median of individual upper bounds, which is dominated by the
+          susceptible floor in K. pneumoniae (~75% susceptible). The P(R)-corrected approach is
+          methodologically correct for population-level surveillance.
         </div>
       </section>
 
