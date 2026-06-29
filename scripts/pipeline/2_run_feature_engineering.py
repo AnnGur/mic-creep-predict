@@ -120,7 +120,7 @@ def print_feature_summary(X_train: pd.DataFrame, X_test: pd.DataFrame) -> None:
     print(f"  Test rows:      {len(X_test):,}")
 
     core = ["year", "gender_male", "age_paediatric", "age_elderly",
-            "military_proxy", "is_censored", "pct_censored_year"]
+            "military_proxy", "pct_censored_year"]
     spec_cols  = [c for c in X_train.columns if c.startswith("spec_")]
     ctry_cols  = [c for c in X_train.columns if c.startswith("ctry_")]
     gene_cols  = [c for c in X_train.columns if c.endswith("_pos")]
@@ -192,9 +192,9 @@ def plot_target_distribution(train_df: pd.DataFrame, test_df: pd.DataFrame, out:
 
 def plot_correlation_heatmap(X_train: pd.DataFrame, y_train: pd.Series, out: Path) -> None:
     core = ["year", "gender_male", "age_paediatric", "age_elderly",
-            "military_proxy", "is_censored", "pct_censored_year"]
+            "military_proxy", "pct_censored_year"]
     gene_cols = [c for c in X_train.columns if c.endswith("_pos")]
-    cols = core + gene_cols
+    cols = [c for c in core + gene_cols if c in X_train.columns]
 
     subset = X_train[cols].copy()
     subset["log2_mic"] = y_train.values
