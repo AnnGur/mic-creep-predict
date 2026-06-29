@@ -56,9 +56,9 @@ export default function MethodologyPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {[
-                ["Total isolates", "89,572", "37,540"],
-                ["Countries", "81", "79"],
-                ["Train period", "2004-2018 (n=62,891)", "2004-2018 (n=24,003)"],
+                ["Total isolates (modelled)", "84,016", "34,365"],
+                ["Countries", "56", "65"],
+                ["Train period", "2008-2018 (n=57,335)", "2008-2018 (n=20,828)"],
                 ["Test period", "2019-2022 (n=26,681)", "2019-2022 (n=13,537)"],
                 ["% censored MIC", "~75%", "~10%"],
                 ["% resistant (MIC > 8 mg/L)", "~7-17%", "~44-68%"],
@@ -101,8 +101,7 @@ export default function MethodologyPage() {
                 ["spec_wound / blood / respiratory / urine / peritoneal", "OHE (5)", "Specimen source"],
                 ["ctry_* (64-80 cols)", "OHE", "Country of isolation"],
                 ["KPC_pos, NDM_pos, OXA_pos, VIM_pos, IMP_pos, GES_pos", "Binary x6", "Carbapenemase gene PCR results"],
-                ["is_censored", "Binary", "Data artifact - isolate at MIC panel floor"],
-                ["pct_censored_year", "Float", "Data artifact - annual censoring rate (methodology control)"],
+                ["pct_censored_year", "Float", "Annual censoring rate - methodology control for panel artifact"],
               ].map(([feat, type, role]) => (
                 <tr key={feat} className="even:bg-gray-50">
                   <td className="px-3 py-2 font-mono text-xs text-gray-700">{feat}</td>
@@ -114,8 +113,9 @@ export default function MethodologyPage() {
           </table>
         </div>
         <p className="text-xs text-gray-500">
-          Total: 91 features for K. pneumoniae, 89 for A. baumannii (country dummy counts differ).
-          The time split is strictly chronological - 2004-2018 train, 2019-2022 test, never shuffled.
+          Total: 85 features per species (country dummy counts vary slightly). Pre-2008 years
+          excluded from training due to sparse sampling (n &lt; 4,000/year). The time split is
+          strictly chronological - 2008-2018 train, 2019-2022 test, never shuffled.
         </p>
       </section>
 
@@ -189,8 +189,8 @@ export default function MethodologyPage() {
         </div>
         <p className="text-sm text-gray-600 leading-relaxed">
           The train/test split is strictly time-ordered. Random shuffling is explicitly disabled.
-          This simulates real deployment: train on 15 years of historical data, predict on 4
-          unseen future years. XGBoost hyperparameters are tuned using time-aware cross-validation
+          This simulates real deployment: train on 11 years of historical data (2008-2018), predict on 4
+          unseen future years (2019-2022). XGBoost hyperparameters are tuned using time-aware cross-validation
           on the training set only - the test set is never seen during tuning.
         </p>
       </section>
@@ -211,10 +211,15 @@ export default function MethodologyPage() {
         </p>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600">
           <strong>Note on artifacts:</strong>{" "}
-          <code className="bg-white border border-gray-200 px-1 rounded">is_censored</code> and{" "}
-          <code className="bg-white border border-gray-200 px-1 rounded">pct_censored_year</code> rank
-          highly in SHAP because censored observations are structurally at the MIC panel floor - not
-          because they are biological predictors. They are flagged as data artifacts throughout.
+          The isolate-level{" "}
+          <code className="bg-white border border-gray-200 px-1 rounded">is_censored</code>{" "}
+          flag was removed after v1 - it dominated SHAP for both species (A. baumannii rank 1
+          at mean|SHAP| 1.78; K. pneumoniae rank 2 at 0.54) despite being a data artifact, not
+          biology. Its removal allowed <code className="bg-white border border-gray-200 px-1 rounded">year</code> to
+          emerge as the top predictor for A. baumannii (0.33) and carbapenemase genes to dominate
+          K. pneumoniae - both biologically expected. The year-level aggregate{" "}
+          <code className="bg-white border border-gray-200 px-1 rounded">pct_censored_year</code>{" "}
+          is retained as a methodology control.
         </div>
       </section>
 
