@@ -90,7 +90,7 @@
   {
     "year": 2019,
     "actual_mic90": 32.0,
-    "predicted_mic90": 30.4139,
+    "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
     "predicted_mic50": 21.4444,
     "pct_resistant": 69.95,
@@ -102,7 +102,7 @@
   {
     "year": 2020,
     "actual_mic90": 32.0,
-    "predicted_mic90": 28.7434,
+    "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
     "predicted_mic50": 20.0421,
     "pct_resistant": 69.45,
@@ -114,7 +114,7 @@
   {
     "year": 2021,
     "actual_mic90": 32.0,
-    "predicted_mic90": 31.4921,
+    "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
     "predicted_mic50": 22.6978,
     "pct_resistant": 71.22,
@@ -126,7 +126,7 @@
   {
     "year": 2022,
     "actual_mic90": 32.0,
-    "predicted_mic90": 28.6299,
+    "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
     "predicted_mic50": 20.5579,
     "pct_resistant": 67.32,
@@ -137,26 +137,26 @@
   },
   {
     "year": 2023,
-    "forecast_mic90": 31.5912,
-    "forecast_log2_mic90": 4.9815,
+    "forecast_mic90": 35.3099,
+    "forecast_log2_mic90": 5.142,
     "source": "forecast_extrapolated"
   },
   {
     "year": 2024,
-    "forecast_mic90": 34.8588,
-    "forecast_log2_mic90": 5.1235,
+    "forecast_mic90": 38.9621,
+    "forecast_log2_mic90": 5.284,
     "source": "forecast_extrapolated"
   },
   {
     "year": 2025,
-    "forecast_mic90": 38.4644,
-    "forecast_log2_mic90": 5.2655,
+    "forecast_mic90": 42.9921,
+    "forecast_log2_mic90": 5.426,
     "source": "forecast_extrapolated"
   },
   {
     "year": 2026,
-    "forecast_mic90": 42.4429,
-    "forecast_log2_mic90": 5.4075,
+    "forecast_mic90": 47.4389,
+    "forecast_log2_mic90": 5.568,
     "source": "forecast_extrapolated"
   }
 ]

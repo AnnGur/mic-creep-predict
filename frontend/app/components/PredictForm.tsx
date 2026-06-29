@@ -254,7 +254,7 @@ export default function PredictForm({ countries, species = "kpneumoniae" }: { co
             </p>
 
             <p className="text-xs text-gray-400 mt-4">
-              Model: XGBoost trained on ATLAS 2004-2018. Predictions outside this distribution
+              Model: XGBoost trained on ATLAS 2008-2018. Predictions outside this distribution
               carry higher uncertainty. Not for clinical use.
             </p>
           </div>
@@ -265,7 +265,7 @@ export default function PredictForm({ countries, species = "kpneumoniae" }: { co
           <p className="font-semibold text-gray-800">How this works</p>
           <p>
             The model predicts log₂(MIC) using year, country, demographics, specimen type,
-            and carbapenemase gene flags. It was trained on ~70,000 ATLAS isolates (2004-2018)
+            and carbapenemase gene flags. It was trained on ~70,000 ATLAS isolates (2008-2018)
             and validated on 2019-2022 data.
           </p>
           <p>
