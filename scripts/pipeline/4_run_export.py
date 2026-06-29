@@ -61,7 +61,12 @@ def load(data_dir: Path, model_suffix: str) -> tuple:
     model         = joblib.load(MODELS_DIR / f"xgb_tuned{model_suffix}.pkl")
     feature_names = json.loads((MODELS_DIR / f"feature_names{model_suffix}.json").read_text())
 
-    return X_train, y_train, X_test, y_test, model, feature_names
+    q90_path = MODELS_DIR / f"xgb_quantile{model_suffix}.pkl"
+    q90_model = joblib.load(q90_path) if q90_path.exists() else None
+    if q90_model:
+        print("  Quantile model (Q0.90) loaded.")
+
+    return X_train, y_train, X_test, y_test, model, feature_names, q90_model
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +89,7 @@ def train_pr_classifier(X_train: pd.DataFrame, y_train: pd.Series, params: dict)
     return clf
 
 
-def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None) -> None:
+def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_model=None) -> None:
     records = {}
 
     train_df = X_train[["year"]].copy()
@@ -268,7 +273,7 @@ def main() -> None:
     _json_suffix = f"_{args.species}"
 
     print(f"[1/{n}] Load data and model  [{SPECIES_MAP[args.species]}]")
-    X_train, y_train, X_test, y_test, model, feature_names = load(data_dir, model_suffix)
+    X_train, y_train, X_test, y_test, model, feature_names, q90_model = load(data_dir, model_suffix)
     print(f"  Train: {len(X_train):,} rows  Test: {len(X_test):,} rows")
 
     params_path = MODELS_DIR / f"xgb_best_params_{args.species}.json"
@@ -279,7 +284,7 @@ def main() -> None:
         clf = train_pr_classifier(X_train, y_train, params)
 
     print(f"\n[2/{n}] MIC90 trend (actual + predicted + forecast)")
-    export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf)
+    export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf, q90_model=q90_model)
 
     print(f"\n[3/{n}] Country stats + censoring lookup")
     export_country_stats(X_test, y_test, model)

@@ -2,121 +2,121 @@
   {
     "rank": 1,
     "feature": "KPC_pos",
-    "mean_abs_shap": 1.00106,
+    "mean_abs_shap": 0.99823,
     "note": "KPC carbapenemase \u2014 main resistance driver in training period"
   },
   {
     "rank": 2,
     "feature": "OXA_pos",
-    "mean_abs_shap": 0.53057,
+    "mean_abs_shap": 0.54085,
     "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
   },
   {
     "rank": 3,
     "feature": "NDM_pos",
-    "mean_abs_shap": 0.45595,
+    "mean_abs_shap": 0.46028,
     "note": "NDM \u2014 fastest-rising mechanism; bypasses avibactam combinations"
   },
   {
     "rank": 4,
     "feature": "ctry_China",
-    "mean_abs_shap": 0.24319,
+    "mean_abs_shap": 0.23466,
     "note": "Country effect: China"
   },
   {
     "rank": 5,
     "feature": "ctry_India",
-    "mean_abs_shap": 0.16278,
+    "mean_abs_shap": 0.15523,
     "note": "Country effect: India"
   },
   {
     "rank": 6,
     "feature": "ctry_Italy",
-    "mean_abs_shap": 0.10393,
+    "mean_abs_shap": 0.1168,
     "note": "Country effect: Italy"
   },
   {
     "rank": 7,
-    "feature": "pct_censored_year",
-    "mean_abs_shap": 0.07725,
-    "note": "Surveillance methodology control \u2014 partial out panel artifact"
+    "feature": "ward_icu",
+    "mean_abs_shap": 0.0835,
+    "note": ""
   },
   {
     "rank": 8,
     "feature": "ctry_Greece",
-    "mean_abs_shap": 0.06878,
+    "mean_abs_shap": 0.07212,
     "note": "Country effect: Greece"
   },
   {
     "rank": 9,
-    "feature": "year",
-    "mean_abs_shap": 0.05952,
-    "note": "Temporal MIC creep signal"
+    "feature": "pct_censored_year",
+    "mean_abs_shap": 0.07,
+    "note": "Surveillance methodology control \u2014 partial out panel artifact"
   },
   {
     "rank": 10,
-    "feature": "VIM_pos",
-    "mean_abs_shap": 0.03528,
-    "note": "VIM carbapenemase gene"
+    "feature": "year",
+    "mean_abs_shap": 0.04727,
+    "note": "Temporal MIC creep signal"
   },
   {
     "rank": 11,
-    "feature": "ctry_Brazil",
-    "mean_abs_shap": 0.02363,
-    "note": "Country effect: Brazil"
+    "feature": "VIM_pos",
+    "mean_abs_shap": 0.03529,
+    "note": "VIM carbapenemase gene"
   },
   {
     "rank": 12,
-    "feature": "ctry_France",
-    "mean_abs_shap": 0.0221,
-    "note": "Country effect: France"
+    "feature": "ctry_Brazil",
+    "mean_abs_shap": 0.02622,
+    "note": "Country effect: Brazil"
   },
   {
     "rank": 13,
-    "feature": "ctry_Guatemala",
-    "mean_abs_shap": 0.01568,
-    "note": "Country effect: Guatemala"
+    "feature": "ctry_France",
+    "mean_abs_shap": 0.02335,
+    "note": "Country effect: France"
   },
   {
     "rank": 14,
-    "feature": "ctry_United States",
-    "mean_abs_shap": 0.01181,
-    "note": "Country effect: United States"
-  },
-  {
-    "rank": 15,
     "feature": "spec_respiratory",
-    "mean_abs_shap": 0.01099,
+    "mean_abs_shap": 0.01733,
     "note": "Specimen type: respiratory"
   },
   {
+    "rank": 15,
+    "feature": "ctry_Guatemala",
+    "mean_abs_shap": 0.0162,
+    "note": "Country effect: Guatemala"
+  },
+  {
     "rank": 16,
-    "feature": "ctry_Russia",
-    "mean_abs_shap": 0.00804,
-    "note": "Country effect: Russia"
+    "feature": "ctry_United States",
+    "mean_abs_shap": 0.00859,
+    "note": "Country effect: United States"
   },
   {
     "rank": 17,
     "feature": "ctry_Chile",
-    "mean_abs_shap": 0.00781,
+    "mean_abs_shap": 0.00855,
     "note": "Country effect: Chile"
   },
   {
     "rank": 18,
     "feature": "spec_blood",
-    "mean_abs_shap": 0.00762,
+    "mean_abs_shap": 0.00849,
     "note": "Specimen type: blood"
   },
   {
     "rank": 19,
-    "feature": "ctry_Colombia",
-    "mean_abs_shap": 0.00685,
-    "note": "Country effect: Colombia"
+    "feature": "ctry_Spain",
+    "mean_abs_shap": 0.00664,
+    "note": "Country effect: Spain"
   },
   {
     "rank": 20,
-    "feature": "age_elderly",
-    "mean_abs_shap": 0.00673,
+    "feature": "age_paediatric",
+    "mean_abs_shap": 0.00623,
     "note": ""
   }
 ]

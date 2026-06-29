@@ -7,6 +7,20 @@ from typing import Tuple
 
 CARBAPENEMASE_GENES = ["KPC", "NDM", "OXA", "VIM", "IMP", "GES"]
 
+# Ward/specialty mapping — ICU, Emergency, Surgical, Paediatric ward, and Clinic
+# are clinically distinct from the reference group (general medicine + unknown).
+WARD_MAP = {
+    "Medicine ICU":            "icu",
+    "Surgery ICU":             "icu",
+    "Pediatric ICU":           "icu",
+    "General Unspecified ICU": "icu",
+    "Emergency Room":          "emergency",
+    "Surgery General":         "surgical",
+    "Pediatric General":       "paediatric_ward",
+    "Clinic / Office":         "clinic",
+    # Medicine General, Nursing Home, None Given, Other → reference "general"
+}
+
 # Mapping from ATLAS "Source" free-text values to 5 broad specimen categories.
 # Matched by substring (case-insensitive); first match wins.
 SPECIMEN_KEYWORDS = {
@@ -22,6 +36,12 @@ TRAIN_START = 2008
 TRAIN_END   = 2018
 TEST_START  = 2019
 TEST_END    = 2022
+
+
+def map_ward(speciality: str) -> str:
+    if pd.isna(speciality):
+        return "general"
+    return WARD_MAP.get(str(speciality), "general")
 
 
 def map_specimen(source: str) -> str:
@@ -62,6 +82,13 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     spec_dummies = pd.get_dummies(spec, prefix="spec")
     spec_dummies = spec_dummies.drop(columns=["spec_other"], errors="ignore")
     X = pd.concat([X, spec_dummies.set_index(df.index)], axis=1)
+
+    # --- Ward / specialty (OHE, "general" is reference) ---
+    if "Speciality" in df.columns:
+        ward = df["Speciality"].apply(map_ward)
+        ward_dummies = pd.get_dummies(ward, prefix="ward")
+        ward_dummies = ward_dummies.drop(columns=["ward_general"], errors="ignore")
+        X = pd.concat([X, ward_dummies.set_index(df.index)], axis=1)
 
     # --- Country (OHE, drop first to avoid multicollinearity) ---
     country_dummies = pd.get_dummies(df["Country"], prefix="ctry", drop_first=True)

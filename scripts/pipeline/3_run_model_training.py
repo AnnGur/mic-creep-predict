@@ -200,27 +200,59 @@ def tune_xgb(X_train, y_train, n_trials: int, model_suffix: str = "") -> xgb.XGB
 
 
 # ---------------------------------------------------------------------------
+# XGBoost quantile regression (Q0.90) — directly targets MIC_90
+# ---------------------------------------------------------------------------
+
+def train_xgb_quantile(X_train, y_train, best_params: dict, model_suffix: str = "") -> xgb.XGBRegressor:
+    """
+    Train XGBoost with quantile loss at alpha=0.90, reusing the Optuna-tuned
+    structural hyperparameters. No sample weighting: quantile loss already
+    focuses on the tail, and weighting would distort the target quantile.
+    """
+    print("  Fitting XGBoost quantile (Q0.90) using tuned hyperparams...")
+    params = {k: v for k, v in best_params.items()}
+    model = xgb.XGBRegressor(
+        **params,
+        objective="reg:quantileerror",
+        quantile_alpha=0.9,
+        tree_method="hist",
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
+    )
+    model.fit(X_train, y_train)
+    fname = f"xgb_quantile{model_suffix}.pkl"
+    joblib.dump(model, MODELS_DIR / fname)
+    print(f"  Saved -> models/{fname}")
+    return model
+
+
+# ---------------------------------------------------------------------------
 # MIC_90 trend: actual vs predicted
 # ---------------------------------------------------------------------------
 
-def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred) -> None:
+def plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred, q90_pred=None) -> None:
     df = X_test[["year"]].copy()
     df["actual"]  = y_test.values
     df["rf_pred"] = rf_pred
     df["xgb_pred"]= xgb_pred
+    if q90_pred is not None:
+        df["q90_pred"] = q90_pred
 
     def mic90_log2(s): return s.quantile(0.90)
 
-    yr = df.groupby("year").agg(
-        actual  =("actual",   mic90_log2),
-        rf_pred =("rf_pred",  mic90_log2),
-        xgb_pred=("xgb_pred", mic90_log2),
-    ).reset_index()
+    agg = {"actual": ("actual", mic90_log2), "rf_pred": ("rf_pred", mic90_log2),
+           "xgb_pred": ("xgb_pred", mic90_log2)}
+    if q90_pred is not None:
+        # quantile predictions ARE already Q0.90 — aggregate with median, not Q0.90
+        agg["q90_pred"] = ("q90_pred", "median")
+    yr = df.groupby("year").agg(**agg).reset_index()
 
     fig, ax = plt.subplots()
     ax.plot(yr["year"], yr["actual"],   "o-",  color="#1f77b4", lw=2, ms=6, label="Actual MIC_90")
     ax.plot(yr["year"], yr["rf_pred"],  "s--", color="#2ca02c", lw=1.5, ms=5, label="RF baseline")
     ax.plot(yr["year"], yr["xgb_pred"], "^-",  color="#d62728", lw=2, ms=5, label="XGBoost tuned")
+    if q90_pred is not None:
+        ax.plot(yr["year"], yr["q90_pred"], "v:", color="#9467bd", lw=2, ms=5, label="XGBoost Q0.90")
     ax.axhline(LOG2_R, color="black", linestyle=":", lw=1.5, label="EUCAST R (log2=3)")
     ax.set_xlabel("Year", fontsize=11)
     ax.set_ylabel("MIC_90 (log2 scale)", fontsize=11)
@@ -415,7 +447,7 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
-    n = 5 if args.skip_optuna else 6
+    n = 5 if args.skip_optuna else 7
 
     species_label  = SPECIES_MAP[args.species].replace("Klebsiella", "K.").replace("Acinetobacter", "A.")
     model_suffix   = f"_{args.species}"
@@ -438,6 +470,7 @@ def main() -> None:
     if args.skip_optuna:
         print("\n  --skip-optuna set: skipping XGBoost tuning.")
         xgb_pred    = rf_pred
+        q90_pred    = None
         xgb_params  = {}
         results     = [rf_metrics]
     else:
@@ -447,10 +480,16 @@ def main() -> None:
         xgb_metrics = compute_metrics(y_test, xgb_pred, "XGBoost tuned")
         with open(MODELS_DIR / f"xgb_best_params{model_suffix}.json") as f:
             xgb_params = json.load(f)
-        results = [rf_metrics, xgb_metrics]
+
+        print(f"\n[4/{n}] XGBoost quantile regression (Q0.90)")
+        q90_model  = train_xgb_quantile(X_train, y_train, xgb_params, model_suffix=model_suffix)
+        q90_pred   = q90_model.predict(X_test)
+        q90_metrics = compute_metrics(y_test, q90_pred, "XGBoost Q0.90")
+
+        results = [rf_metrics, xgb_metrics, q90_metrics]
 
     print(f"\n[{n-2}/{n}] MIC_90 trend + residual plots")
-    plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred)
+    plot_mic90_trend(X_test, y_test, rf_pred, xgb_pred, q90_pred=q90_pred)
     plot_residuals(X_test, y_test, xgb_pred, model_suffix=model_suffix)
     plot_rmse_by_year(X_test, y_test, rf_pred, xgb_pred, model_suffix=model_suffix)
 
