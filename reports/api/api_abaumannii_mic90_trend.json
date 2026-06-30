@@ -97,7 +97,7 @@
     "pct_resistant_pred": 76.86,
     "n": 3621,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 64.15
+    "pct_resistant_prob": 66.13
   },
   {
     "year": 2020,
@@ -109,7 +109,7 @@
     "pct_resistant_pred": 79.78,
     "n": 3264,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 66.37
+    "pct_resistant_prob": 67.84
   },
   {
     "year": 2021,
@@ -121,7 +121,7 @@
     "pct_resistant_pred": 79.76,
     "n": 3503,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 67.6
+    "pct_resistant_prob": 69.03
   },
   {
     "year": 2022,
@@ -133,7 +133,7 @@
     "pct_resistant_pred": 80.25,
     "n": 3149,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 67.39
+    "pct_resistant_prob": 68.79
   },
   {
     "year": 2023,

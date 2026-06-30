@@ -74,9 +74,20 @@ def load(data_dir: Path, model_suffix: str) -> tuple:
 # ---------------------------------------------------------------------------
 
 def train_pr_classifier(X_train: pd.DataFrame, y_train: pd.Series, params: dict) -> xgb.XGBClassifier:
-    """Train P(R) binary XGBoost classifier using regression hyperparams as structural priors."""
+    """Train P(R) binary XGBoost classifier using regression hyperparams as structural priors.
+
+    Recency weighting: years closer to the test window get exponentially higher weight.
+    This counteracts dilution from supplementary datasets (e.g. Entasis) that have lower
+    resistance rates in overlapping years, and helps calibration near the train/test boundary.
+    """
     p = params.copy()
     n_est = int(p.pop("n_estimators", 500))
+
+    years = X_train["year"].values
+    max_year = int(years.max())
+    # Exponential recency weight: each year back from max_year is discounted by 0.85
+    sample_weight = 0.85 ** (max_year - years)
+
     clf = xgb.XGBClassifier(
         n_estimators=n_est,
         objective="binary:logistic",
@@ -85,7 +96,8 @@ def train_pr_classifier(X_train: pd.DataFrame, y_train: pd.Series, params: dict)
         verbosity=0,
         **p,
     )
-    clf.fit(X_train.values, (y_train.values >= LOG2_R).astype(int))
+    clf.fit(X_train.values, (y_train.values >= LOG2_R).astype(int),
+            sample_weight=sample_weight)
     return clf
 
 
