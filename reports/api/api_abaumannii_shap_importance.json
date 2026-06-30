@@ -2,121 +2,121 @@
   {
     "rank": 1,
     "feature": "year",
-    "mean_abs_shap": 0.28764,
+    "mean_abs_shap": 0.3883,
     "note": "Temporal MIC creep signal"
   },
   {
     "rank": 2,
     "feature": "ctry_United States",
-    "mean_abs_shap": 0.20712,
+    "mean_abs_shap": 0.29359,
     "note": "Country effect: United States"
   },
   {
     "rank": 3,
     "feature": "ctry_France",
-    "mean_abs_shap": 0.19791,
+    "mean_abs_shap": 0.2298,
     "note": "Country effect: France"
   },
   {
     "rank": 4,
     "feature": "ctry_Germany",
-    "mean_abs_shap": 0.17086,
+    "mean_abs_shap": 0.1974,
     "note": "Country effect: Germany"
   },
   {
     "rank": 5,
-    "feature": "ward_icu",
-    "mean_abs_shap": 0.16485,
-    "note": ""
+    "feature": "pct_censored_year",
+    "mean_abs_shap": 0.17143,
+    "note": "Surveillance methodology control \u2014 partial out panel artifact"
   },
   {
     "rank": 6,
-    "feature": "age_paediatric",
-    "mean_abs_shap": 0.1215,
+    "feature": "age_elderly",
+    "mean_abs_shap": 0.13063,
     "note": ""
   },
   {
     "rank": 7,
-    "feature": "age_elderly",
-    "mean_abs_shap": 0.09361,
+    "feature": "ward_icu",
+    "mean_abs_shap": 0.12544,
     "note": ""
   },
   {
     "rank": 8,
-    "feature": "spec_wound",
-    "mean_abs_shap": 0.09228,
-    "note": "Specimen type: wound"
+    "feature": "age_paediatric",
+    "mean_abs_shap": 0.118,
+    "note": ""
   },
   {
     "rank": 9,
-    "feature": "ctry_Canada",
-    "mean_abs_shap": 0.08495,
-    "note": "Country effect: Canada"
+    "feature": "spec_wound",
+    "mean_abs_shap": 0.10784,
+    "note": "Specimen type: wound"
   },
   {
     "rank": 10,
-    "feature": "pct_censored_year",
-    "mean_abs_shap": 0.07984,
-    "note": "Surveillance methodology control \u2014 partial out panel artifact"
+    "feature": "spec_respiratory",
+    "mean_abs_shap": 0.09575,
+    "note": "Specimen type: respiratory"
   },
   {
     "rank": 11,
-    "feature": "ctry_Australia",
-    "mean_abs_shap": 0.07554,
-    "note": "Country effect: Australia"
+    "feature": "ctry_Spain",
+    "mean_abs_shap": 0.09479,
+    "note": "Country effect: Spain"
   },
   {
     "rank": 12,
     "feature": "ctry_Czech Republic",
-    "mean_abs_shap": 0.07476,
+    "mean_abs_shap": 0.09313,
     "note": "Country effect: Czech Republic"
   },
   {
     "rank": 13,
-    "feature": "ctry_Spain",
-    "mean_abs_shap": 0.07172,
-    "note": "Country effect: Spain"
+    "feature": "ctry_Australia",
+    "mean_abs_shap": 0.08556,
+    "note": "Country effect: Australia"
   },
   {
     "rank": 14,
-    "feature": "spec_urine",
-    "mean_abs_shap": 0.0654,
-    "note": "Specimen type: urine"
+    "feature": "ctry_Canada",
+    "mean_abs_shap": 0.08391,
+    "note": "Country effect: Canada"
   },
   {
     "rank": 15,
-    "feature": "spec_respiratory",
-    "mean_abs_shap": 0.06306,
-    "note": "Specimen type: respiratory"
+    "feature": "spec_urine",
+    "mean_abs_shap": 0.07177,
+    "note": "Specimen type: urine"
   },
   {
     "rank": 16,
     "feature": "spec_blood",
-    "mean_abs_shap": 0.04955,
+    "mean_abs_shap": 0.05504,
     "note": "Specimen type: blood"
   },
   {
     "rank": 17,
-    "feature": "ctry_Japan",
-    "mean_abs_shap": 0.04661,
-    "note": "Country effect: Japan"
-  },
-  {
-    "rank": 18,
     "feature": "gender_male",
-    "mean_abs_shap": 0.04619,
+    "mean_abs_shap": 0.05451,
     "note": ""
   },
   {
+    "rank": 18,
+    "feature": "OXA_pos",
+    "mean_abs_shap": 0.05343,
+    "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
+  },
+  {
     "rank": 19,
-    "feature": "ctry_Italy",
-    "mean_abs_shap": 0.04067,
-    "note": "Country effect: Italy"
+    "feature": "ctry_Japan",
+    "mean_abs_shap": 0.04785,
+    "note": "Country effect: Japan"
   },
   {
     "rank": 20,
     "feature": "ctry_Belgium",
-    "mean_abs_shap": 0.03775,
+    "mean_abs_shap": 0.04455,
     "note": "Country effect: Belgium"
   }
 ]

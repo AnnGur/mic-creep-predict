@@ -27,7 +27,7 @@ import seaborn as sns
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from data.loader import ATLASLoader
+from data.loader import ATLASLoader, load_entasis_abaumannii
 from data.preprocessor import MICPreprocessor
 from features.engineer import (
     CARBAPENEMASE_GENES,
@@ -257,6 +257,15 @@ def main() -> None:
     print(f"[1/{n}] Load & parse ATLAS data  [{species_name}]")
     global df
     df = load_and_parse(args.data_dir, species_name)
+
+    if args.species == "abaumannii":
+        print(f"  Merging Entasis supplementary data (training period only)...")
+        entasis_df = load_entasis_abaumannii(args.data_dir)
+        # Align columns: keep only columns present in the ATLAS dataframe
+        shared_cols = [c for c in df.columns if c in entasis_df.columns]
+        df = pd.concat([df, entasis_df[shared_cols]], ignore_index=True)
+        print(f"  Combined A. baumannii: {len(df):,} rows "
+              f"({df['Year'].min()}-{df['Year'].max()})")
 
     print(f"\n[2/{n}] Specimen type mapping")
     print_specimen_mapping(df)

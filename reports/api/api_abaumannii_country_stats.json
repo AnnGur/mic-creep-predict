@@ -5,7 +5,7 @@
     "pct_resistant": 97.99,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 37.566
+    "mic90_predicted": 41.326
   },
   {
     "country": "Latvia",
@@ -13,7 +13,7 @@
     "pct_resistant": 96.99,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 31.9914
+    "mic90_predicted": 27.7688
   },
   {
     "country": "Lithuania",
@@ -21,7 +21,7 @@
     "pct_resistant": 96.98,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 30.6818
+    "mic90_predicted": 49.8498
   },
   {
     "country": "Greece",
@@ -29,7 +29,7 @@
     "pct_resistant": 96.85,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 32.247
+    "mic90_predicted": 53.1937
   },
   {
     "country": "Argentina",
@@ -37,7 +37,7 @@
     "pct_resistant": 95.69,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 28.2595
+    "mic90_predicted": 32.1117
   },
   {
     "country": "Bulgaria",
@@ -45,7 +45,7 @@
     "pct_resistant": 95.45,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 26.9644
+    "mic90_predicted": 28.7777
   },
   {
     "country": "Romania",
@@ -53,23 +53,23 @@
     "pct_resistant": 95.2,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 32.3669
+    "mic90_predicted": 42.5658
   },
   {
     "country": "Russia",
     "n": 180,
     "pct_resistant": 93.89,
-    "pct_resistant_pred": 100.0,
+    "pct_resistant_pred": 98.89,
     "mic90_actual": 32.0,
-    "mic90_predicted": 30.2276
+    "mic90_predicted": 23.5212
   },
   {
     "country": "Brazil",
     "n": 488,
     "pct_resistant": 93.44,
-    "pct_resistant_pred": 98.98,
+    "pct_resistant_pred": 99.18,
     "mic90_actual": 32.0,
-    "mic90_predicted": 27.6146
+    "mic90_predicted": 31.7445
   },
   {
     "country": "Turkey",
@@ -77,23 +77,23 @@
     "pct_resistant": 92.59,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 28.4999
+    "mic90_predicted": 47.9269
   },
   {
     "country": "Jordan",
     "n": 66,
     "pct_resistant": 92.42,
-    "pct_resistant_pred": 98.48,
+    "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 35.198
+    "mic90_predicted": 39.3221
   },
   {
     "country": "India",
     "n": 891,
     "pct_resistant": 90.68,
-    "pct_resistant_pred": 98.54,
+    "pct_resistant_pred": 99.1,
     "mic90_actual": 32.0,
-    "mic90_predicted": 27.4257
+    "mic90_predicted": 22.4721
   },
   {
     "country": "Mexico",
@@ -101,7 +101,7 @@
     "pct_resistant": 90.3,
     "pct_resistant_pred": 98.34,
     "mic90_actual": 32.0,
-    "mic90_predicted": 27.5046
+    "mic90_predicted": 31.8697
   },
   {
     "country": "Guatemala",
@@ -109,7 +109,7 @@
     "pct_resistant": 89.56,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 31.125
+    "mic90_predicted": 46.512
   },
   {
     "country": "Saudi Arabia",
@@ -117,7 +117,7 @@
     "pct_resistant": 89.55,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 33.5547
+    "mic90_predicted": 33.1357
   },
   {
     "country": "Korea, South",
@@ -125,7 +125,7 @@
     "pct_resistant": 89.33,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 28.0879
+    "mic90_predicted": 24.8227
   },
   {
     "country": "Italy",
@@ -133,7 +133,7 @@
     "pct_resistant": 89.21,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 31.4508
+    "mic90_predicted": 38.8496
   },
   {
     "country": "Morocco",
@@ -141,7 +141,7 @@
     "pct_resistant": 88.14,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 34.1676
+    "mic90_predicted": 32.458
   },
   {
     "country": "Thailand",
@@ -149,23 +149,23 @@
     "pct_resistant": 83.62,
     "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 25.0151
+    "mic90_predicted": 25.3923
   },
   {
     "country": "South Africa",
     "n": 275,
     "pct_resistant": 82.91,
-    "pct_resistant_pred": 96.0,
+    "pct_resistant_pred": 97.09,
     "mic90_actual": 32.0,
-    "mic90_predicted": 26.3219
+    "mic90_predicted": 22.1856
   },
   {
     "country": "Kuwait",
     "n": 345,
     "pct_resistant": 78.84,
-    "pct_resistant_pred": 85.8,
+    "pct_resistant_pred": 81.45,
     "mic90_actual": 32.0,
-    "mic90_predicted": 27.3775
+    "mic90_predicted": 19.2468
   },
   {
     "country": "Poland",
@@ -173,31 +173,31 @@
     "pct_resistant": 76.43,
     "pct_resistant_pred": 89.73,
     "mic90_actual": 32.0,
-    "mic90_predicted": 26.7718
+    "mic90_predicted": 28.2471
   },
   {
     "country": "Malaysia",
     "n": 245,
     "pct_resistant": 73.47,
-    "pct_resistant_pred": 89.39,
+    "pct_resistant_pred": 97.55,
     "mic90_actual": 32.0,
-    "mic90_predicted": 23.8789
+    "mic90_predicted": 25.0337
   },
   {
     "country": "Israel",
     "n": 315,
     "pct_resistant": 73.02,
-    "pct_resistant_pred": 97.78,
+    "pct_resistant_pred": 97.46,
     "mic90_actual": 32.0,
-    "mic90_predicted": 22.9008
+    "mic90_predicted": 21.6084
   },
   {
     "country": "China",
     "n": 1158,
     "pct_resistant": 72.63,
-    "pct_resistant_pred": 99.74,
+    "pct_resistant_pred": 98.01,
     "mic90_actual": 32.0,
-    "mic90_predicted": 27.2037
+    "mic90_predicted": 25.0036
   },
   {
     "country": "Venezuela",
@@ -205,79 +205,79 @@
     "pct_resistant": 69.84,
     "pct_resistant_pred": 98.41,
     "mic90_actual": 32.0,
-    "mic90_predicted": 25.5792
+    "mic90_predicted": 18.9591
   },
   {
     "country": "Panama",
     "n": 135,
     "pct_resistant": 65.93,
-    "pct_resistant_pred": 71.11,
+    "pct_resistant_pred": 73.33,
     "mic90_actual": 32.0,
-    "mic90_predicted": 16.0561
+    "mic90_predicted": 14.5004
   },
   {
     "country": "Hungary",
     "n": 236,
     "pct_resistant": 63.14,
-    "pct_resistant_pred": 97.03,
+    "pct_resistant_pred": 100.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 23.1293
+    "mic90_predicted": 27.9188
   },
   {
     "country": "Taiwan",
     "n": 351,
     "pct_resistant": 57.83,
-    "pct_resistant_pred": 48.15,
+    "pct_resistant_pred": 47.86,
     "mic90_actual": 32.0,
-    "mic90_predicted": 17.9755
+    "mic90_predicted": 15.6177
   },
   {
     "country": "Slovenia",
     "n": 26,
     "pct_resistant": 57.69,
-    "pct_resistant_pred": 53.85,
+    "pct_resistant_pred": 57.69,
     "mic90_actual": 32.0,
-    "mic90_predicted": 13.1487
+    "mic90_predicted": 9.9008
   },
   {
     "country": "Hong Kong",
     "n": 47,
     "pct_resistant": 57.45,
-    "pct_resistant_pred": 68.09,
+    "pct_resistant_pred": 63.83,
     "mic90_actual": 32.0,
-    "mic90_predicted": 15.6402
+    "mic90_predicted": 14.5892
   },
   {
     "country": "Other",
     "n": 544,
     "pct_resistant": 50.92,
-    "pct_resistant_pred": 100.0,
+    "pct_resistant_pred": 97.43,
     "mic90_actual": 32.0,
-    "mic90_predicted": 29.1729
+    "mic90_predicted": 27.0233
   },
   {
     "country": "Philippines",
     "n": 137,
     "pct_resistant": 50.36,
-    "pct_resistant_pred": 77.37,
+    "pct_resistant_pred": 67.88,
     "mic90_actual": 32.0,
-    "mic90_predicted": 15.2763
+    "mic90_predicted": 15.4702
   },
   {
     "country": "United States",
     "n": 876,
     "pct_resistant": 45.21,
-    "pct_resistant_pred": 49.43,
+    "pct_resistant_pred": 33.9,
     "mic90_actual": 32.0,
-    "mic90_predicted": 14.0398
+    "mic90_predicted": 17.4102
   },
   {
     "country": "Spain",
     "n": 414,
     "pct_resistant": 45.17,
-    "pct_resistant_pred": 78.02,
+    "pct_resistant_pred": 79.95,
     "mic90_actual": 32.0,
-    "mic90_predicted": 15.6988
+    "mic90_predicted": 15.9128
   },
   {
     "country": "Switzerland",
@@ -285,31 +285,31 @@
     "pct_resistant": 33.33,
     "pct_resistant_pred": 20.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 17.3585
+    "mic90_predicted": 13.4979
   },
   {
     "country": "Portugal",
     "n": 116,
     "pct_resistant": 23.28,
-    "pct_resistant_pred": 92.24,
+    "pct_resistant_pred": 90.52,
     "mic90_actual": 32.0,
-    "mic90_predicted": 20.1002
+    "mic90_predicted": 21.5421
   },
   {
     "country": "Ireland",
     "n": 35,
     "pct_resistant": 22.86,
-    "pct_resistant_pred": 5.71,
+    "pct_resistant_pred": 17.14,
     "mic90_actual": 32.0,
-    "mic90_predicted": 7.388
+    "mic90_predicted": 10.8083
   },
   {
     "country": "France",
     "n": 381,
     "pct_resistant": 22.57,
-    "pct_resistant_pred": 5.51,
+    "pct_resistant_pred": 3.94,
     "mic90_actual": 32.0,
-    "mic90_predicted": 6.8475
+    "mic90_predicted": 4.9183
   },
   {
     "country": "Germany",
@@ -317,15 +317,15 @@
     "pct_resistant": 21.97,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 2.8638
+    "mic90_predicted": 1.877
   },
   {
     "country": "Belgium",
     "n": 89,
     "pct_resistant": 17.98,
-    "pct_resistant_pred": 41.57,
+    "pct_resistant_pred": 19.1,
     "mic90_actual": 32.0,
-    "mic90_predicted": 10.1847
+    "mic90_predicted": 13.317
   },
   {
     "country": "Czech Republic",
@@ -333,31 +333,31 @@
     "pct_resistant": 17.45,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 32.0,
-    "mic90_predicted": 4.2103
+    "mic90_predicted": 2.6332
   },
   {
     "country": "Colombia",
     "n": 111,
     "pct_resistant": 16.22,
-    "pct_resistant_pred": 49.55,
+    "pct_resistant_pred": 32.43,
     "mic90_actual": 32.0,
-    "mic90_predicted": 14.1679
+    "mic90_predicted": 9.0215
   },
   {
     "country": "Chile",
     "n": 91,
     "pct_resistant": 14.29,
-    "pct_resistant_pred": 67.03,
+    "pct_resistant_pred": 25.27,
     "mic90_actual": 16.0,
-    "mic90_predicted": 15.7274
+    "mic90_predicted": 11.8529
   },
   {
     "country": "United Kingdom",
     "n": 66,
     "pct_resistant": 13.64,
-    "pct_resistant_pred": 22.73,
+    "pct_resistant_pred": 6.06,
     "mic90_actual": 32.0,
-    "mic90_predicted": 9.5635
+    "mic90_predicted": 7.136
   },
   {
     "country": "Australia",
@@ -365,7 +365,7 @@
     "pct_resistant": 5.7,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 0.5,
-    "mic90_predicted": 0.6297
+    "mic90_predicted": 0.7559
   },
   {
     "country": "Netherlands",
@@ -373,7 +373,7 @@
     "pct_resistant": 5.26,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 1.1487,
-    "mic90_predicted": 3.305
+    "mic90_predicted": 3.4372
   },
   {
     "country": "Canada",
@@ -381,7 +381,7 @@
     "pct_resistant": 5.2,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 1.0,
-    "mic90_predicted": 2.4278
+    "mic90_predicted": 2.4123
   },
   {
     "country": "Japan",
@@ -389,7 +389,7 @@
     "pct_resistant": 2.17,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 1.0,
-    "mic90_predicted": 1.0043
+    "mic90_predicted": 0.8873
   },
   {
     "country": "Finland",
@@ -397,6 +397,6 @@
     "pct_resistant": 0.0,
     "pct_resistant_pred": 0.0,
     "mic90_actual": 0.5743,
-    "mic90_predicted": 0.9047
+    "mic90_predicted": 0.8967
   }
 ]

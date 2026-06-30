@@ -65,26 +65,26 @@
   },
   {
     "year": 2016,
-    "actual_mic90": 32.0,
+    "actual_mic90": 64.0,
     "actual_mic50": 16.0,
-    "pct_resistant": 64.79,
-    "n": 1738,
+    "pct_resistant": 62.11,
+    "n": 2581,
     "source": "train_actual"
   },
   {
     "year": 2017,
-    "actual_mic90": 32.0,
-    "actual_mic50": 32.0,
-    "pct_resistant": 57.06,
-    "n": 885,
+    "actual_mic90": 64.0,
+    "actual_mic50": 16.0,
+    "pct_resistant": 52.48,
+    "n": 1711,
     "source": "train_actual"
   },
   {
     "year": 2018,
-    "actual_mic90": 32.0,
+    "actual_mic90": 64.0,
     "actual_mic50": 32.0,
-    "pct_resistant": 69.43,
-    "n": 1897,
+    "pct_resistant": 62.7,
+    "n": 2826,
     "source": "train_actual"
   },
   {
@@ -92,48 +92,48 @@
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 21.101,
+    "predicted_mic50": 18.5941,
     "pct_resistant": 69.95,
-    "pct_resistant_pred": 78.54,
+    "pct_resistant_pred": 76.86,
     "n": 3621,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 69.92
+    "pct_resistant_prob": 64.15
   },
   {
     "year": 2020,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 19.8639,
+    "predicted_mic50": 20.3427,
     "pct_resistant": 69.45,
-    "pct_resistant_pred": 81.34,
+    "pct_resistant_pred": 79.78,
     "n": 3264,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 71.22
+    "pct_resistant_prob": 66.37
   },
   {
     "year": 2021,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 22.0131,
+    "predicted_mic50": 20.4446,
     "pct_resistant": 71.22,
-    "pct_resistant_pred": 82.44,
+    "pct_resistant_pred": 79.76,
     "n": 3503,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 73.23
+    "pct_resistant_prob": 67.6
   },
   {
     "year": 2022,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 20.363,
+    "predicted_mic50": 20.5011,
     "pct_resistant": 67.32,
-    "pct_resistant_pred": 81.42,
+    "pct_resistant_pred": 80.25,
     "n": 3149,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 71.37
+    "pct_resistant_prob": 67.39
   },
   {
     "year": 2023,
