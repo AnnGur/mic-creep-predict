@@ -16,26 +16,26 @@ const SPECIES_AUC: Record<string, number> = {
 
 async function getTrend(species: string) {
   const res = await fetch(`${API}/api/trend/mic90?species=${species}`, {
-    next: { revalidate: 3600 },
+    next: { revalidate: 300 },
   });
   if (!res.ok) throw new Error("Failed to fetch trend data");
   return res.json();
 }
 
-const LEGEND_ITEMS = [
+const LEGEND_ITEMS_KPNEUMONIAE = [
   {
     colour: "#2563eb",
     style: "solid",
     label: "Actual MICₐ (observed)",
     desc:
-      "90th-percentile MIC measured in ATLAS surveillance. The sharp rise in 2017-2018 reflects the spread of carbapenem-resistant strains entering the dataset. The plateau at 32 mg/L is a panel ceiling artifact - ATLAS reports all values >= 32 mg/L as exactly 32.",
+      "90th-percentile MIC measured in ATLAS surveillance. MICₐ rose from ~0.25 mg/L in 2008 to 32 mg/L by 2018, reflecting the emergence of carbapenem-resistant strains. The plateau at 32 mg/L is a panel ceiling artifact - ATLAS reports all values ≥ 32 mg/L as exactly 32.",
   },
   {
     colour: "#16a34a",
     style: "dashed",
     label: "Model predicted MICₐ (2019-2022 test period)",
     desc:
-      "XGBoost regression predictions on held-out test years the model never saw during training. The model correctly captures the upward trajectory but underestimates the ceiling because most training isolates were susceptible.",
+      "XGBoost regression predictions on held-out test years the model never saw during training. The model correctly captures the ceiling once resistance prevalence exceeds 10%.",
   },
   {
     colour: "#d97706",
@@ -43,6 +43,30 @@ const LEGEND_ITEMS = [
     label: "Forecast (2023-2026, extrapolated)",
     desc:
       "Model projections beyond the available data. Treat as indicative - the real trajectory depends on emergence of new resistance mechanisms and surveillance methodology changes.",
+  },
+];
+
+const LEGEND_ITEMS_ABAUMANNII = [
+  {
+    colour: "#2563eb",
+    style: "solid",
+    label: "Actual MICₐ (observed)",
+    desc:
+      "90th-percentile MIC in ATLAS surveillance. A. baumannii has been at the panel ceiling (32 mg/L) since 2008, reflecting the long-established dominance of OXA-type carbapenemases. MICₐ cannot rise further within the ATLAS measurement range - resistance trajectory is tracked through prevalence (see chart below).",
+  },
+  {
+    colour: "#16a34a",
+    style: "dashed",
+    label: "Model predicted MICₐ (2019-2022 test period)",
+    desc:
+      "XGBoost regression correctly predicts the ceiling for test years. Because resistance prevalence exceeds 10% in all years, the P(R)-corrected MICₐ is fixed at 32 mg/L.",
+  },
+  {
+    colour: "#d97706",
+    style: "dashed",
+    label: "Forecast (2023-2026, extrapolated)",
+    desc:
+      "MICₐ forecast is constrained to the panel ceiling. Resistance burden is better described by the prevalence trend chart below.",
   },
 ];
 
@@ -54,6 +78,7 @@ export default async function Home({
   const { species = "kpneumoniae" } = await searchParams;
   const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
   const auc = SPECIES_AUC[species] ?? 0.982;
+  const legendItems = species === "abaumannii" ? LEGEND_ITEMS_ABAUMANNII : LEGEND_ITEMS_KPNEUMONIAE;
 
   const trend = await getTrend(species);
   const forecast2026 = trend.data.find(
@@ -115,7 +140,7 @@ export default async function Home({
         <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           How to read this chart
         </h3>
-        {LEGEND_ITEMS.map((item) => (
+        {legendItems.map((item) => (
           <div key={item.label} className="flex gap-3">
             <div className="mt-1 flex-shrink-0 flex items-center gap-1">
               <svg width="28" height="10">
