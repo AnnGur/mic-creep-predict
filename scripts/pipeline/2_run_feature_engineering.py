@@ -247,6 +247,10 @@ def parse_args() -> argparse.Namespace:
         "--species", choices=list(SPECIES_MAP), default="kpneumoniae",
         help="Target species (default: kpneumoniae)",
     )
+    parser.add_argument(
+        "--atlas-only", action="store_true",
+        help="Skip supplementary datasets (Entasis/SIDERO-WT/Venatorx); ATLAS only.",
+    )
     return parser.parse_args()
 
 
@@ -263,7 +267,7 @@ def main() -> None:
     global df
     df = load_and_parse(args.data_dir, species_name)
 
-    if args.species == "abaumannii":
+    if not args.atlas_only and args.species == "abaumannii":
         print(f"  Merging supplementary datasets (training period only)...")
         for loader_fn, label in [
             (lambda d: load_entasis_abaumannii(d), "Entasis"),
@@ -274,8 +278,10 @@ def main() -> None:
             df = pd.concat([df, supp[shared_cols]], ignore_index=True)
         print(f"  Combined A. baumannii: {len(df):,} rows "
               f"({df['Year'].min()}-{df['Year'].max()})")
+    elif args.atlas_only:
+        print(f"  --atlas-only: skipping supplementary datasets.")
 
-    if args.species == "kpneumoniae":
+    if not args.atlas_only and args.species == "kpneumoniae":
         print(f"  Merging supplementary datasets (training period only)...")
         for loader_fn, label in [
             (lambda d: load_sidero_wt(d, "Klebsiella pneumoniae"), "SIDERO-WT"),

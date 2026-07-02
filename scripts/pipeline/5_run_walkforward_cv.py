@@ -39,6 +39,39 @@ WALK_START = 2014   # first test year (ensures >= 6 training years)
 WALK_END   = 2019   # last walk-forward fold
 
 
+def _reconstruct_country(df: pd.DataFrame) -> pd.Series:
+    """Rebuild country name from ctry_* OHE columns. Argentina = drop_first reference."""
+    country_cols = [c for c in df.columns if c.startswith("ctry_")]
+    country = pd.Series("Argentina", index=df.index)
+    for col in country_cols:
+        country[df[col] == 1] = col.replace("ctry_", "")
+    return country
+
+
+def _country_stratified_mic90(X_te: pd.DataFrame, pred: np.ndarray,
+                               prob_r: np.ndarray) -> float:
+    """Hybrid: global ceiling if global P(R) > 10%, else country-stratified ceiling."""
+    global_pct_r = prob_r.mean()
+    if global_pct_r > 0.10:
+        return float(EUCAST_R * 4)
+
+    df = X_te[["year"]].copy()
+    df["log2_mic_predicted"] = pred
+    df["prob_resistant"]     = prob_r
+    df["country"]            = _reconstruct_country(X_te).values
+
+    total_n  = len(df)
+    weighted = 0.0
+    for _ctry, cg in df.groupby("country"):
+        c_pct_r = cg["prob_resistant"].mean()
+        if c_pct_r > 0.10:
+            c_mic90 = float(EUCAST_R * 4)
+        else:
+            c_mic90 = float(2 ** np.quantile(cg["log2_mic_predicted"].values, 0.90))
+        weighted += (len(cg) / total_n) * c_mic90
+    return round(weighted, 4)
+
+
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
@@ -143,27 +176,26 @@ def run_fold(
     pct_r_actual = float(actual_r.mean() * 100)
     pct_r_pred   = float(prob_r.mean() * 100)
 
-    # P(R)-corrected MIC90
-    if pct_r_pred > 10:
-        mic90_pred = float(EUCAST_R * 4)   # panel ceiling
-    else:
-        mic90_pred = round(float(2 ** np.quantile(pred, 0.90)), 4)
-    mic90_actual = round(float(2 ** np.quantile(y_te.values, 0.90)), 4)
+    mic90_actual      = round(float(2 ** np.quantile(y_te.values, 0.90)), 4)
+    mic90_global      = float(EUCAST_R * 4) if pct_r_pred > 10 else \
+                        round(float(2 ** np.quantile(pred, 0.90)), 4)
+    mic90_stratified  = _country_stratified_mic90(X_te, pred, prob_r)
 
     return {
-        "test_year":        test_year,
-        "n_train":          int(len(X_tr)),
-        "n_test":           int(len(X_te)),
-        "n_resistant":      int(actual_r.sum()),
-        "rmse_all":         round(float(np.sqrt(mean_squared_error(y_te, pred))), 4),
-        "mae_all":          round(float(mean_absolute_error(y_te, pred)), 4),
-        "r2_all":           round(float(r2_score(y_te, pred)), 4),
-        "rmse_resistant":   round(rmse_r, 4),
-        "mic90_actual":     mic90_actual,
-        "mic90_predicted":  mic90_pred,
-        "pct_r_actual":     round(pct_r_actual, 2),
-        "pct_r_predicted":  round(pct_r_pred, 2),
-        "pr_error_pp":      round(pct_r_pred - pct_r_actual, 2),
+        "test_year":            test_year,
+        "n_train":              int(len(X_tr)),
+        "n_test":               int(len(X_te)),
+        "n_resistant":          int(actual_r.sum()),
+        "rmse_all":             round(float(np.sqrt(mean_squared_error(y_te, pred))), 4),
+        "mae_all":              round(float(mean_absolute_error(y_te, pred)), 4),
+        "r2_all":               round(float(r2_score(y_te, pred)), 4),
+        "rmse_resistant":       round(rmse_r, 4),
+        "mic90_actual":         mic90_actual,
+        "mic90_global":         mic90_global,
+        "mic90_stratified":     mic90_stratified,
+        "pct_r_actual":         round(pct_r_actual, 2),
+        "pct_r_predicted":      round(pct_r_pred, 2),
+        "pr_error_pp":          round(pct_r_pred - pct_r_actual, 2),
     }
 
 
@@ -182,15 +214,17 @@ def parse_args():
 def print_table(results: list[dict], label: str) -> None:
     print(f"\n  {label}")
     print(f"  {'Year':<6} {'n_train':>8} {'n_test':>7} {'RMSE_all':>9} {'R2':>7} "
-          f"{'RMSE_R':>8} {'MIC90_act':>10} {'MIC90_pred':>11} "
+          f"{'RMSE_R':>8} {'MIC90_act':>10} {'MIC90_global':>13} {'MIC90_ctry':>11} "
           f"{'%R_act':>7} {'%R_pred':>8} {'PR_err':>7}")
-    print("  " + "-" * 100)
+    print("  " + "-" * 115)
     for r in results:
+        mic90_g = r.get("mic90_global", r.get("mic90_predicted", float("nan")))
+        mic90_s = r.get("mic90_stratified", float("nan"))
         print(
             f"  {r['test_year']:<6} {r['n_train']:>8,} {r['n_test']:>7,} "
             f"{r['rmse_all']:>9.4f} {r['r2_all']:>7.4f} "
             f"{r['rmse_resistant']:>8.4f} "
-            f"{r['mic90_actual']:>10.1f} {r['mic90_predicted']:>11.1f} "
+            f"{r['mic90_actual']:>10.1f} {mic90_g:>13.1f} {mic90_s:>11.1f} "
             f"{r['pct_r_actual']:>6.1f}% {r['pct_r_predicted']:>7.1f}% "
             f"{r['pr_error_pp']:>+7.2f}"
         )

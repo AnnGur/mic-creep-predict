@@ -103,6 +103,44 @@ def train_pr_classifier(X_train: pd.DataFrame, y_train: pd.Series, params: dict)
     return clf
 
 
+def _reconstruct_country(df: pd.DataFrame) -> pd.Series:
+    """Rebuild country name from ctry_* OHE columns. Argentina is the drop_first reference."""
+    country_cols = [c for c in df.columns if c.startswith("ctry_")]
+    country = pd.Series("Argentina", index=df.index)
+    for col in country_cols:
+        country[df[col] == 1] = col.replace("ctry_", "")
+    return country
+
+
+def _country_stratified_mic90(g: pd.DataFrame, pr_col: str = "prob_resistant") -> float:
+    """Hybrid MIC90 estimator: global ceiling when P(R) > 10%, else country-stratified.
+
+    When the GLOBAL mean P(R) already exceeds 10%, the population 90th percentile
+    mathematically falls in the resistant subpopulation — use the panel ceiling (32).
+    Below 10% globally, apply the ceiling correction per country: high-resistance
+    countries (Greece, Italy) contribute 32 mg/L while low-resistance countries
+    contribute the regression Q0.90. This captures cross-country heterogeneity
+    during the transitional period before global threshold is crossed.
+    """
+    global_pct_r = g[pr_col].mean() if pr_col in g.columns else \
+                   (g["log2_mic_predicted"] >= LOG2_R).mean()
+    if global_pct_r > 0.10:
+        return float(EUCAST_R * 4)   # global threshold — panel ceiling
+
+    country_series = _reconstruct_country(g)
+    total_n = len(g)
+    weighted = 0.0
+    for _ctry, cg in g.groupby(country_series):
+        c_pct_r = cg[pr_col].mean() if pr_col in cg.columns else \
+                  (cg["log2_mic_predicted"] >= LOG2_R).mean()
+        if c_pct_r > 0.10:
+            c_mic90 = float(EUCAST_R * 4)
+        else:
+            c_mic90 = float(2 ** cg["log2_mic_predicted"].quantile(0.90))
+        weighted += (len(cg) / total_n) * c_mic90
+    return round(weighted, 4)
+
+
 def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_model=None) -> None:
     records = {}
 
@@ -126,17 +164,7 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_mo
     if test_prob is not None:
         test_df["prob_resistant"] = test_prob
     for yr, g in test_df.groupby("year"):
-        # P(R)-corrected MIC90: when P(R) > 10%, the 90th percentile falls within the
-        # resistant subpopulation by arithmetic. Resistant isolates hit the ATLAS panel
-        # ceiling (32 mg/L), so the ceiling-corrected predicted MIC90 = panel max.
-        # Below 10% resistance, the 90th percentile is in the susceptible range —
-        # use the regression model's Q0.90 directly.
-        pct_r = g["prob_resistant"].mean() if "prob_resistant" in g.columns else \
-                (g["log2_mic_predicted"] >= LOG2_R).mean()
-        if pct_r > 0.10:
-            predicted_mic90 = float(EUCAST_R * 4)   # 32 mg/L — ATLAS panel ceiling
-        else:
-            predicted_mic90 = round(float(2 ** g["log2_mic_predicted"].quantile(0.90)), 4)
+        predicted_mic90 = _country_stratified_mic90(g)
 
         rec = {
             "year":               int(yr),
@@ -337,6 +365,14 @@ def export_prevalence_trend(X_train, y_train, X_test, y_test, clf) -> None:
         })
 
     output = {
+        "species":        "Acinetobacter baumannii",
+        "primary_metric": True,
+        "metric_rationale": (
+            "A. baumannii MIC is bimodal (susceptible ~0.25 mg/L vs resistant "
+            "64-128 mg/L) with almost no intermediate values. Regression on "
+            "continuous MIC is misspecified for this distribution. Resistance "
+            "prevalence (P(MIC >= 8)) is the scientifically correct primary output."
+        ),
         "trend_model": {
             "type":                  "logistic (linear on logit scale)",
             "fit_years":             f"{int(train_yrs.min())}-{int(train_yrs.max())}",
@@ -393,12 +429,20 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
-    n = 3 if args.skip_shap else 4
+    is_abau = args.species == "abaumannii"
+
+    # A. baumannii primary metric is resistance prevalence (bimodal distribution,
+    # regression on MIC is misspecified). MIC90 trend is exported as secondary.
+    if is_abau:
+        n = 3 if args.skip_shap else 4
+        step_prevalence, step_mic90, step_country = 2, 3, 3
+    else:
+        n = 3 if args.skip_shap else 4
+        step_prevalence, step_mic90, step_country = None, 2, 3
 
     model_suffix = f"_{args.species}"
     data_dir = PROJECT_ROOT / "data" / "processed" / args.species
 
-    # Module-level sentinel used by json save helpers — set before calling them
     global _json_suffix
     _json_suffix = f"_{args.species}"
 
@@ -413,16 +457,19 @@ def main() -> None:
         print("  Training P(R) classifier...")
         clf = train_pr_classifier(X_train, y_train, params)
 
-    print(f"\n[2/{n}] MIC90 trend (actual + predicted + forecast)")
+    if is_abau and clf is not None:
+        print(f"\n[{step_prevalence}/{n}] Resistance prevalence trend  "
+              f"[PRIMARY metric for A. baumannii]")
+        export_prevalence_trend(X_train, y_train, X_test, y_test, clf)
+        print(f"\n[{step_mic90}/{n}] MIC90 trend  [secondary — ceiling-limited]")
+    else:
+        print(f"\n[{step_mic90}/{n}] MIC90 trend (actual + predicted + forecast)")
+
     export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf, q90_model=q90_model)
 
-    print(f"\n[3/{n}] Country stats + censoring lookup")
+    print(f"\n[{step_country}/{n}] Country stats + censoring lookup")
     export_country_stats(X_test, y_test, model)
     export_censoring_lookup(X_train, X_test)
-
-    if args.species == "abaumannii" and clf is not None:
-        print(f"\n[+] Binary prevalence trend (A. baumannii)")
-        export_prevalence_trend(X_train, y_train, X_test, y_test, clf)
 
     if not args.skip_shap:
         print(f"\n[4/{n}] SHAP importance")
