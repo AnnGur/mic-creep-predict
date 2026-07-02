@@ -122,17 +122,51 @@ export default async function Home({
         <SpeciesSwitcher current={species} />
       </div>
 
-      {/* Trend chart */}
+      {/* For A. baumannii: prevalence chart comes FIRST (primary metric) */}
+      {species === "abaumannii" && (
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">
+            Resistance Prevalence - <em>{speciesLabel}</em> + Meropenem (2008-2022)
+          </h2>
+          <p className="text-sm text-gray-500 mb-1">
+            <strong>Primary metric for A. baumannii.</strong> MIC&#x2090; has been at the ATLAS panel
+            ceiling (32 mg/L) since 2008 and carries no trend information. Resistance burden is
+            tracked through prevalence: percentage of isolates with MIC &ge; 8 mg/L.
+            Blue = observed rate; green dashed = P(R) classifier (AUC-ROC = {auc.toFixed(3)}).
+          </p>
+          <p className="text-xs text-gray-400 mb-5">
+            Logistic trend: +0.098 logit/yr, R&#178; = 0.66, p = 0.002. Forecast: ~77% by 2026.
+          </p>
+          <ResistanceTrendChart data={trend.data} auc={auc} />
+        </section>
+      )}
+
+      {/* MIC90 trend chart */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">
           MIC&#x2090; Trend - <em>{speciesLabel}</em> + Meropenem (2008-2026)
         </h2>
         <p className="text-sm text-gray-500 mb-5">
-          90th-percentile MIC value by year across{" "}
-          <strong>{trainYears + 4}</strong> years of ATLAS surveillance data.
-          Model trained on 2008-2018; tested on 2019-2022; forecast extends to 2026.
+          {species === "abaumannii" ? (
+            <>
+              MIC&#x2090; (solid blue) is at the ATLAS panel ceiling throughout - resistance was
+              already established before 2008. The MIC&#x2050; line (dashed, light blue) shows the
+              median isolate consolidating at the ceiling by 2017, confirming population-wide
+              resistance saturation.
+            </>
+          ) : (
+            <>
+              90th-percentile MIC value by year across{" "}
+              <strong>{trainYears + 4}</strong> years of ATLAS surveillance data.
+              Model trained on 2008-2018; tested on 2019-2022; forecast extends to 2026.
+            </>
+          )}
         </p>
-        <MicTrendChart data={trend.data} eucastR={trend.eucast_r_mg_l} />
+        <MicTrendChart
+          data={trend.data}
+          eucastR={trend.eucast_r_mg_l}
+          showMic50={species === "abaumannii"}
+        />
       </section>
 
       {/* Legend explainer */}
@@ -177,18 +211,20 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Resistance rate chart */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          Resistance Rate - <em>{speciesLabel}</em> + Meropenem (2008-2022)
-        </h2>
-        <p className="text-sm text-gray-500 mb-5">
-          Percentage of isolates with MIC &ge; 8 mg/L (EUCAST R breakpoint).
-          Blue = observed rate; green dashed = P(R) classifier probability on the 2019-2022 test set
-          (AUC-ROC = {auc.toFixed(3)}).
-        </p>
-        <ResistanceTrendChart data={trend.data} auc={auc} />
-      </section>
+      {/* Resistance rate chart — shown below for K.pn, shown above (primary) for A.bau */}
+      {species !== "abaumannii" && (
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">
+            Resistance Rate - <em>{speciesLabel}</em> + Meropenem (2008-2022)
+          </h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Percentage of isolates with MIC &ge; 8 mg/L (EUCAST R breakpoint).
+            Blue = observed rate; green dashed = P(R) classifier probability on the 2019-2022 test set
+            (AUC-ROC = {auc.toFixed(3)}).
+          </p>
+          <ResistanceTrendChart data={trend.data} auc={auc} />
+        </section>
+      )}
 
       {/* Key stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

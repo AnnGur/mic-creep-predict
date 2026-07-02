@@ -16,21 +16,23 @@ import {
 type TrendRow = {
   year: number;
   actual_mic90?: number;
+  actual_mic50?: number;
   predicted_mic90?: number;
   forecast_mic90?: number;
-  pct_resistant?: number;
   source: string;
 };
 
 type Props = {
   data: TrendRow[];
   eucastR: number;
+  showMic50?: boolean;
 };
 
 const COLOURS = {
-  actual: "#2563eb",
-  predicted: "#16a34a",
-  forecast: "#d97706",
+  actual:     "#2563eb",
+  mic50:      "#93c5fd",   // light blue - secondary line
+  predicted:  "#16a34a",
+  forecast:   "#d97706",
   breakpoint: "#dc2626",
 };
 
@@ -49,14 +51,16 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export default function MicTrendChart({ data, eucastR }: Props) {
-  // Flatten into one row per year for ComposedChart
+export default function MicTrendChart({ data, eucastR, showMic50 = false }: Props) {
   const rows = data.map((d) => ({
-    year: d.year,
-    actual: d.actual_mic90 ?? null,
+    year:      d.year,
+    actual:    d.actual_mic90 ?? null,
+    mic50:     showMic50 ? (d.actual_mic50 ?? null) : null,
     predicted: d.predicted_mic90 ?? null,
-    forecast: d.forecast_mic90 ?? null,
+    forecast:  d.forecast_mic90 ?? null,
   }));
+
+  const yLabel = showMic50 ? "MIC (mg/L)" : "MIC₉₀ (mg/L)";
 
   return (
     <ResponsiveContainer width="100%" height={400}>
@@ -70,31 +74,18 @@ export default function MicTrendChart({ data, eucastR }: Props) {
         <YAxis
           tickFormatter={(v) => `${v}`}
           tick={{ fontSize: 12 }}
-          label={{
-            value: "MIC₉₀ (mg/L)",
-            angle: -90,
-            position: "insideLeft",
-            offset: 12,
-            fontSize: 12,
-          }}
+          label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 12, fontSize: 12 }}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
 
-        {/* EUCAST resistance breakpoint */}
         <ReferenceLine
           y={eucastR}
           stroke={COLOURS.breakpoint}
           strokeDasharray="6 3"
-          label={{
-            value: `EUCAST R ≥ ${eucastR} mg/L`,
-            position: "insideTopRight",
-            fill: COLOURS.breakpoint,
-            fontSize: 11,
-          }}
+          label={{ value: `EUCAST R ≥ ${eucastR} mg/L`, position: "insideTopRight",
+                   fill: COLOURS.breakpoint, fontSize: 11 }}
         />
-
-        {/* Train/test split */}
         <ReferenceLine
           x={2019}
           stroke="#6b7280"
@@ -110,6 +101,17 @@ export default function MicTrendChart({ data, eucastR }: Props) {
           dot={{ r: 3 }}
           connectNulls
         />
+        {showMic50 && (
+          <Line
+            dataKey="mic50"
+            name="Actual MIC₅₀ (median isolate)"
+            stroke={COLOURS.mic50}
+            strokeWidth={2}
+            strokeDasharray="4 2"
+            dot={{ r: 3 }}
+            connectNulls
+          />
+        )}
         <Line
           dataKey="predicted"
           name="Model predicted MIC₉₀"
@@ -121,7 +123,7 @@ export default function MicTrendChart({ data, eucastR }: Props) {
         />
         <Area
           dataKey="forecast"
-          name="Forecast MIC₉₀ (2023–2026)"
+          name="Forecast MIC₉₀ (2023-2026)"
           stroke={COLOURS.forecast}
           fill={COLOURS.forecast}
           fillOpacity={0.12}
