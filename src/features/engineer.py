@@ -60,7 +60,46 @@ def map_specimen(source: str) -> str:
     return "other"
 
 
-def build_features(df: pd.DataFrame, keep_countries: set = None) -> pd.DataFrame:
+def compute_lag(df_full: pd.DataFrame, df_split: pd.DataFrame) -> pd.Series:
+    """
+    For each isolate in df_split, return the resistance rate in its country
+    in the previous year (lag-1). Lookup is computed from df_full.
+
+    Fallback chain: country + prev_year rate -> global prev_year rate -> global mean.
+    """
+    rate_dict   = df_full.groupby(["Country", "Year"])["is_resistant"].mean().to_dict()
+    global_dict = df_full.groupby("Year")["is_resistant"].mean().to_dict()
+    global_mean = float(df_full["is_resistant"].mean())
+
+    vals = [
+        rate_dict.get((ctry, yr - 1), global_dict.get(yr - 1, global_mean))
+        for ctry, yr in zip(df_split["Country"], df_split["Year"])
+    ]
+    return pd.Series(vals, index=df_split.index, name="lag1_pct_resistant_ctry", dtype=float)
+
+
+def build_lag_lookup(df_full: pd.DataFrame) -> dict:
+    """
+    Build a {country: {year_str: rate}} dict for API inference.
+    Includes '_global' key for country-not-found fallback.
+    """
+    lookup: dict = {}
+    for (ctry, yr), rate in df_full.groupby(["Country", "Year"])["is_resistant"].mean().items():
+        lookup.setdefault(ctry, {})[str(int(yr))] = round(float(rate), 6)
+
+    lookup["_global"] = {
+        str(int(yr)): round(float(r), 6)
+        for yr, r in df_full.groupby("Year")["is_resistant"].mean().items()
+    }
+    lookup["_global_mean"] = round(float(df_full["is_resistant"].mean()), 6)
+    return lookup
+
+
+def build_features(
+    df: pd.DataFrame,
+    keep_countries: set = None,
+    lag: "pd.Series | None" = None,
+) -> pd.DataFrame:
     """
     Build feature matrix from parsed ATLAS dataframe.
 
@@ -72,6 +111,9 @@ def build_features(df: pd.DataFrame, keep_countries: set = None) -> pd.DataFrame
       Countries outside this set are collapsed to "Other". Compute from
       training data via get_keep_countries(); pass the same set for test.
       If None, all countries are encoded individually (legacy behaviour).
+
+    lag: optional Series (same index as df) with lag1_pct_resistant_ctry values.
+      Compute via compute_lag(df_full, df_split).
 
     Returns feature matrix X (all float/int, no target column).
     """
@@ -125,6 +167,20 @@ def build_features(df: pd.DataFrame, keep_countries: set = None) -> pd.DataFrame
     yearly_cens = df.groupby("Year")["is_censored"].mean()
     X["pct_censored_year"] = df["Year"].map(yearly_cens).values
 
+    # --- Lag feature: previous-year country resistance rate ---
+    if lag is not None:
+        X["lag1_pct_resistant_ctry"] = lag.values
+
+    # --- Gene × year interaction terms ---
+    # Captures how each carbapenemase gene's MIC contribution changes over time.
+    # NDM and OXA emerged post-2017; KPC plateaued. XGBoost can learn the timing
+    # from year alone, but explicit interactions make it transparent in SHAP.
+    year_vals = df["Year"].astype(int).values
+    for gene in CARBAPENEMASE_GENES:
+        col = f"{gene}_pos"
+        if col in df.columns:
+            X[f"{gene}_x_year"] = df[col].astype(int).values * year_vals
+
     # Ensure all columns are numeric
     X = X.astype(float)
 
@@ -159,7 +215,9 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path, min_country_n: int = 50) -> No
       1. Time-split
       2. Compute keep_countries from training set (countries with >= min_country_n isolates)
       3. Build X, y for train and test using the same country mapping
-      4. Save to out_dir as parquet + keep_countries.json
+         - lag1_pct_resistant_ctry: computed from full df (prev-year country rate)
+         - gene × year interaction terms
+      4. Save parquets, keep_countries.json, and lag_lookup.json
 
     Never shuffles data.
     """
@@ -177,9 +235,13 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path, min_country_n: int = 50) -> No
     print(f"  Countries kept (n>={min_country_n}): {len(keep_countries)}/{n_total} "
           f"({n_collapsed} collapsed to 'Other')")
 
-    X_train = build_features(train_df, keep_countries=keep_countries)
+    # Lag feature: previous-year country resistance rate (uses full df for rate lookup)
+    lag_train = compute_lag(df, train_df)
+    lag_test  = compute_lag(df, test_df)
+
+    X_train = build_features(train_df, keep_countries=keep_countries, lag=lag_train)
     y_train = build_target(train_df)
-    X_test  = build_features(test_df, keep_countries=keep_countries)
+    X_test  = build_features(test_df, keep_countries=keep_countries, lag=lag_test)
     y_test  = build_target(test_df)
 
     print(f"  Feature matrix shape: {X_train.shape[1]} columns")
@@ -192,5 +254,9 @@ def run_pipeline(df: pd.DataFrame, out_dir: Path, min_country_n: int = 50) -> No
     (out_dir / "keep_countries.json").write_text(
         json.dumps(sorted(keep_countries), indent=2)
     )
+
+    # Lag lookup for API inference: {country: {year_str: rate}}
+    lag_lookup = build_lag_lookup(df)
+    (out_dir / "lag_lookup.json").write_text(json.dumps(lag_lookup))
 
     print(f"  Saved to: {out_dir}")

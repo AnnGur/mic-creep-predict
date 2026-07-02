@@ -90,6 +90,7 @@ _mic90_trend:      dict[str, list[dict]]  = {}
 _country_stats:    dict[str, list[dict]]  = {}
 _shap_importance:  dict[str, list[dict]]  = {}
 _censoring_lookup: dict[str, dict[int, float]] = {}
+_lag_lookup:       dict[str, dict]        = {}  # species -> {country: {year_str: rate}}
 
 
 def _model_files(species: str) -> tuple[str, str]:
@@ -140,6 +141,9 @@ async def startup_event() -> None:
             {int(float(k)): float(v) for k, v in raw_cens.items()}
             if isinstance(raw_cens, dict) else {}
         )
+
+        lag_path = REPORTS / f"{prefix}_lag_lookup.json"
+        _lag_lookup[species] = json.loads(lag_path.read_text()) if lag_path.exists() else {}
 
         print(f"  [{species}] loaded — {len(_feature_names[species])} features")
 
@@ -199,15 +203,40 @@ def _build_feature_vector(req: PredictionRequest) -> pd.DataFrame:
     if ctry_col in row:
         row[ctry_col] = 1
 
-    row["KPC_pos"] = int(req.kpc_pos)
-    row["NDM_pos"] = int(req.ndm_pos)
-    row["OXA_pos"] = int(req.oxa_pos)
-    row["VIM_pos"] = int(req.vim_pos)
-    row["IMP_pos"] = int(req.imp_pos)
-    row["GES_pos"] = int(req.ges_pos)
+    gene_vals = {
+        "KPC_pos": int(req.kpc_pos),
+        "NDM_pos": int(req.ndm_pos),
+        "OXA_pos": int(req.oxa_pos),
+        "VIM_pos": int(req.vim_pos),
+        "IMP_pos": int(req.imp_pos),
+        "GES_pos": int(req.ges_pos),
+    }
+    for k, v in gene_vals.items():
+        row[k] = v
 
     row["is_censored"]       = 0
     row["pct_censored_year"] = _censoring_lookup[req.species].get(req.year, 0.88)
+
+    # Lag feature: previous-year country resistance rate
+    if "lag1_pct_resistant_ctry" in row:
+        lag = _lag_lookup.get(req.species, {})
+        ctry_rates = lag.get(req.country, lag.get("_global", {}))
+        # Walk backwards from year-1 to find the most recent known rate
+        prev_rate = lag.get("_global_mean", 0.5)
+        for y in range(req.year - 1, 2003, -1):
+            if str(y) in ctry_rates:
+                prev_rate = ctry_rates[str(y)]
+                break
+            if str(y) in lag.get("_global", {}):
+                prev_rate = lag["_global"][str(y)]
+                break
+        row["lag1_pct_resistant_ctry"] = prev_rate
+
+    # Gene × year interaction terms
+    for gene, val in gene_vals.items():
+        col = f"{gene.replace('_pos', '')}_x_year"
+        if col in row:
+            row[col] = val * req.year
 
     return pd.DataFrame([row])[feature_names]
 
