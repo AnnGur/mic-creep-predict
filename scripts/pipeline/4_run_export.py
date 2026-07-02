@@ -254,6 +254,110 @@ def export_shap_importance(model, X_test, feature_names: list) -> None:
     print(f"  -> reports/{fname}  (top 20 features)")
 
 
+# ---------------------------------------------------------------------------
+# 5. Binary prevalence trend (A. baumannii only)
+# ---------------------------------------------------------------------------
+
+def export_prevalence_trend(X_train, y_train, X_test, y_test, clf) -> None:
+    """Binary resistance prevalence trend — the correct model for A. baumannii.
+
+    A. baumannii MIC is bimodal (0.25 mg/L susceptible cluster vs 64-128 mg/L
+    resistant cluster) with almost nothing in between. Regression on continuous
+    MIC is misspecified. This function models the year-level PREVALENCE of
+    resistance (P(MIC >= 8)) as the primary output, with:
+      - Wilson 95% CI on actual observed prevalence per year
+      - P(R) classifier predictions per year (train + test)
+      - Logistic trend fit (linear on logit scale) fitted on train years
+      - Trend extrapolated to forecast years 2023-2026
+    """
+    from scipy import stats as scipy_stats
+
+    TRAIN_END_YR = 2018
+
+    # Per-isolate predictions for both splits
+    train_df = X_train[["year"]].copy()
+    train_df["resistant"] = (y_train.values >= LOG2_R).astype(int)
+    train_df["prob_r"]    = clf.predict_proba(X_train.values)[:, 1]
+    train_df["split"]     = "train"
+
+    test_df = X_test[["year"]].copy()
+    test_df["resistant"] = (y_test.values >= LOG2_R).astype(int)
+    test_df["prob_r"]    = clf.predict_proba(X_test.values)[:, 1]
+    test_df["split"]     = "test"
+
+    all_df = pd.concat([train_df, test_df])
+
+    def wilson_ci(k: int, n: int, z: float = 1.96) -> tuple:
+        p = k / n
+        denom  = 1 + z**2 / n
+        center = (p + z**2 / (2 * n)) / denom
+        margin = z * np.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / denom
+        return max(0.0, center - margin), min(1.0, center + margin)
+
+    year_records = []
+    for yr, g in all_df.groupby("year"):
+        n  = len(g)
+        k  = int(g["resistant"].sum())
+        ci_lo, ci_hi = wilson_ci(k, n)
+        year_records.append({
+            "year":             int(yr),
+            "n":                n,
+            "n_resistant":      k,
+            "pct_resistant":    round(k / n * 100, 2),
+            "pct_predicted":    round(float(g["prob_r"].mean() * 100), 2),
+            "ci_lo_95":         round(ci_lo * 100, 2),
+            "ci_hi_95":         round(ci_hi * 100, 2),
+            "split":            g["split"].iloc[0],
+        })
+
+    # Logistic trend fitted on TRAIN years only (prospective: no test leakage)
+    train_rows = [r for r in year_records if r["split"] == "train"]
+    train_yrs  = np.array([r["year"] for r in train_rows])
+    train_p    = np.clip([r["pct_resistant"] / 100 for r in train_rows], 0.001, 0.999)
+    logit_p    = np.log(train_p / (1 - train_p))
+
+    slope, intercept, r_val, p_val, _ = scipy_stats.linregress(train_yrs, logit_p)
+
+    # Apply trend across all observed + forecast years
+    all_years = sorted({r["year"] for r in year_records} | set(range(2023, 2027)))
+    trend_by_year = {}
+    for yr in all_years:
+        logit = intercept + slope * yr
+        trend_by_year[yr] = round(float(100 / (1 + np.exp(-logit))), 2)
+
+    for r in year_records:
+        r["trend_fitted_pct"] = trend_by_year[r["year"]]
+
+    # Forecast rows
+    for yr in range(2023, 2027):
+        year_records.append({
+            "year":             yr,
+            "trend_fitted_pct": trend_by_year[yr],
+            "split":            "forecast",
+        })
+
+    output = {
+        "trend_model": {
+            "type":                  "logistic (linear on logit scale)",
+            "fit_years":             f"{int(train_yrs.min())}-{int(train_yrs.max())}",
+            "slope_logit_per_year":  round(float(slope), 4),
+            "r_squared":             round(float(r_val ** 2), 4),
+            "p_value":               round(float(p_val), 6),
+            "interpretation":        (
+                f"Resistance prevalence {'rising' if slope > 0 else 'falling'} at "
+                f"{abs(slope):.4f} logit/yr on training period; "
+                f"p={'<0.001' if p_val < 0.001 else f'{p_val:.4f}'}"
+            ),
+        },
+        "years": sorted(year_records, key=lambda r: r["year"]),
+    }
+
+    fname = "api_abaumannii_prevalence_trend.json"
+    (REPORTS / fname).write_text(json.dumps(output, indent=2))
+    print(f"  -> reports/{fname}  ({len(year_records)} years)")
+    print(f"  Logistic trend: slope={slope:.4f} logit/yr, R²={r_val**2:.3f}, p={p_val:.4f}")
+
+
 def _shap_note(feature: str) -> str:
     notes = {
         "KPC_pos":           "KPC carbapenemase — main resistance driver in training period",
@@ -315,6 +419,10 @@ def main() -> None:
     print(f"\n[3/{n}] Country stats + censoring lookup")
     export_country_stats(X_test, y_test, model)
     export_censoring_lookup(X_train, X_test)
+
+    if args.species == "abaumannii" and clf is not None:
+        print(f"\n[+] Binary prevalence trend (A. baumannii)")
+        export_prevalence_trend(X_train, y_train, X_test, y_test, clf)
 
     if not args.skip_shap:
         print(f"\n[4/{n}] SHAP importance")

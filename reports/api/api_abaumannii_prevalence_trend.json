@@ -1,0 +1,197 @@
+{
+  "trend_model": {
+    "type": "logistic (linear on logit scale)",
+    "fit_years": "2008-2018",
+    "slope_logit_per_year": 0.0744,
+    "r_squared": 0.4732,
+    "p_value": 0.019302,
+    "interpretation": "Resistance prevalence rising at 0.0744 logit/yr on training period; p=0.0193"
+  },
+  "years": [
+    {
+      "year": 2008,
+      "n": 2374,
+      "n_resistant": 1052,
+      "pct_resistant": 44.31,
+      "pct_predicted": 46.08,
+      "ci_lo_95": 42.33,
+      "ci_hi_95": 46.32,
+      "split": "train",
+      "trend_fitted_pct": 47.39
+    },
+    {
+      "year": 2009,
+      "n": 2746,
+      "n_resistant": 1280,
+      "pct_resistant": 46.61,
+      "pct_predicted": 46.84,
+      "ci_lo_95": 44.75,
+      "ci_hi_95": 48.48,
+      "split": "train",
+      "trend_fitted_pct": 49.25
+    },
+    {
+      "year": 2010,
+      "n": 2149,
+      "n_resistant": 1065,
+      "pct_resistant": 49.56,
+      "pct_predicted": 49.44,
+      "ci_lo_95": 47.45,
+      "ci_hi_95": 51.67,
+      "split": "train",
+      "trend_fitted_pct": 51.11
+    },
+    {
+      "year": 2011,
+      "n": 1466,
+      "n_resistant": 649,
+      "pct_resistant": 44.27,
+      "pct_predicted": 43.51,
+      "ci_lo_95": 41.75,
+      "ci_hi_95": 46.82,
+      "split": "train",
+      "trend_fitted_pct": 52.97
+    },
+    {
+      "year": 2012,
+      "n": 1643,
+      "n_resistant": 1026,
+      "pct_resistant": 62.45,
+      "pct_predicted": 62.07,
+      "ci_lo_95": 60.08,
+      "ci_hi_95": 64.76,
+      "split": "train",
+      "trend_fitted_pct": 54.82
+    },
+    {
+      "year": 2013,
+      "n": 1891,
+      "n_resistant": 1211,
+      "pct_resistant": 64.04,
+      "pct_predicted": 63.85,
+      "ci_lo_95": 61.85,
+      "ci_hi_95": 66.17,
+      "split": "train",
+      "trend_fitted_pct": 56.65
+    },
+    {
+      "year": 2014,
+      "n": 2686,
+      "n_resistant": 1775,
+      "pct_resistant": 66.08,
+      "pct_predicted": 66.56,
+      "ci_lo_95": 64.27,
+      "ci_hi_95": 67.85,
+      "split": "train",
+      "trend_fitted_pct": 58.47
+    },
+    {
+      "year": 2015,
+      "n": 2527,
+      "n_resistant": 1658,
+      "pct_resistant": 65.61,
+      "pct_predicted": 65.38,
+      "ci_lo_95": 63.74,
+      "ci_hi_95": 67.44,
+      "split": "train",
+      "trend_fitted_pct": 60.26
+    },
+    {
+      "year": 2016,
+      "n": 3531,
+      "n_resistant": 2216,
+      "pct_resistant": 62.76,
+      "pct_predicted": 62.54,
+      "ci_lo_95": 61.15,
+      "ci_hi_95": 64.34,
+      "split": "train",
+      "trend_fitted_pct": 62.03
+    },
+    {
+      "year": 2017,
+      "n": 2490,
+      "n_resistant": 1376,
+      "pct_resistant": 55.26,
+      "pct_predicted": 55.3,
+      "ci_lo_95": 53.3,
+      "ci_hi_95": 57.2,
+      "split": "train",
+      "trend_fitted_pct": 63.77
+    },
+    {
+      "year": 2018,
+      "n": 3506,
+      "n_resistant": 2120,
+      "pct_resistant": 60.47,
+      "pct_predicted": 60.51,
+      "ci_lo_95": 58.84,
+      "ci_hi_95": 62.07,
+      "split": "train",
+      "trend_fitted_pct": 65.47
+    },
+    {
+      "year": 2019,
+      "n": 3621,
+      "n_resistant": 2533,
+      "pct_resistant": 69.95,
+      "pct_predicted": 65.96,
+      "ci_lo_95": 68.44,
+      "ci_hi_95": 71.42,
+      "split": "test",
+      "trend_fitted_pct": 67.13
+    },
+    {
+      "year": 2020,
+      "n": 3264,
+      "n_resistant": 2267,
+      "pct_resistant": 69.45,
+      "pct_predicted": 67.49,
+      "ci_lo_95": 67.85,
+      "ci_hi_95": 71.01,
+      "split": "test",
+      "trend_fitted_pct": 68.75
+    },
+    {
+      "year": 2021,
+      "n": 3503,
+      "n_resistant": 2495,
+      "pct_resistant": 71.22,
+      "pct_predicted": 68.64,
+      "ci_lo_95": 69.7,
+      "ci_hi_95": 72.7,
+      "split": "test",
+      "trend_fitted_pct": 70.33
+    },
+    {
+      "year": 2022,
+      "n": 3149,
+      "n_resistant": 2120,
+      "pct_resistant": 67.32,
+      "pct_predicted": 68.61,
+      "ci_lo_95": 65.66,
+      "ci_hi_95": 68.94,
+      "split": "test",
+      "trend_fitted_pct": 71.86
+    },
+    {
+      "year": 2023,
+      "trend_fitted_pct": 73.34,
+      "split": "forecast"
+    },
+    {
+      "year": 2024,
+      "trend_fitted_pct": 74.77,
+      "split": "forecast"
+    },
+    {
+      "year": 2025,
+      "trend_fitted_pct": 76.15,
+      "split": "forecast"
+    },
+    {
+      "year": 2026,
+      "trend_fitted_pct": 77.47,
+      "split": "forecast"
+    }
+  ]
+}
