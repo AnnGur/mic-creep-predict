@@ -308,81 +308,94 @@ and geographic drivers of resistance escalation?</p>
 </div>
 
 <h2>Data</h2>
-<p><strong>Dataset:</strong> ATLAS (Antimicrobial Testing Leadership and Surveillance),
-Pfizer/Vivli. Controlled access via Vivli AMR Surveillance Platform.</p>
+<p><strong>Primary dataset:</strong> ATLAS (Antimicrobial Testing Leadership and Surveillance),
+Pfizer/Vivli. Controlled access via Vivli AMR Surveillance Platform.
+K. pneumoniae additionally uses SIDERO-WT (2014-2022) and Venatorx (2016-2022) supplementary
+surveillance datasets sharing the same MIC panel ceiling.
+A. baumannii uses ATLAS only &mdash; supplementary A. bau datasets are clinical trial
+enrollment cohorts with selection bias toward treatment-failure isolates.</p>
 <div class="table-wrap"><table>
-  <tr><th>Species</th><th>Antibiotic</th><th>Isolates</th><th>Years</th><th>Countries</th></tr>
-  <tr><td><em>K. pneumoniae</em></td><td>Meropenem</td><td>89,572</td><td>2004-2022</td><td>66</td></tr>
-  <tr><td><em>A. baumannii</em></td><td>Meropenem</td><td>37,540</td><td>2004-2022</td><td>66</td></tr>
+  <tr><th>Species</th><th>Datasets</th><th>Train (2008-2018)</th><th>Test (2019-2022)</th><th>Countries</th></tr>
+  <tr><td><em>K. pneumoniae</em></td><td>ATLAS + SIDERO-WT + Venatorx</td><td>64,429</td><td>26,681</td><td>55</td></tr>
+  <tr><td><em>A. baumannii</em></td><td>ATLAS only</td><td>20,828</td><td>13,537</td><td>54</td></tr>
 </table></div>
 
-<h2>Key Finding — MIC Creep is Confirmed</h2>
+<h2>Key Findings</h2>
 <div class="card green">
-  For <em>K. pneumoniae</em> + meropenem: MIC90 slope = <strong>+1.97 mg/L/yr</strong>,
-  R&sup2; = 0.67, p = 6.3 &times; 10&#8315;&sup6;.
-  Resistance rate rose from 5% (2007) to 20% (2024) &mdash; a 4&times; increase in 17 years.
+  <strong>K. pneumoniae &mdash; MIC creep confirmed.</strong>
+  MIC90 rose from &lt;0.5 mg/L (2008) to 32 mg/L (2018+), crossing the EUCAST R breakpoint around 2018.
+  Resistance prevalence increased from ~7% (2008) to ~15% (2022).
+  Carbapenemase gene drivers: KPC dominated 2008-2016; NDM and OXA rose sharply from 2017.
 </div>
-<p>The mechanistic signature is <strong>divergence between MIC50 and MIC90</strong>: MIC50 stays
-flat at ~0.03 mg/L for 20 years while MIC90 climbs. This is the fingerprint of a growing
-resistant subpopulation, not a population-wide shift.</p>
-<p>Carbapenemase gene drivers in <em>K. pneumoniae</em>: KPC dominated 2004-2016, then NDM and OXA rose
-sharply from 2017 onward. NDM now peaks at ~9% (2022) and bypasses ceftazidime-avibactam, one of
-the last-resort salvage drugs. In <em>A. baumannii</em>, OXA-type carbapenemases dominate throughout.</p>
+<div class="card">
+  <strong>A. baumannii &mdash; resistance switch, not creep.</strong>
+  MIC distribution is strongly bimodal (susceptible ~0.25 mg/L; resistant at panel ceiling 32 mg/L).
+  MIC90 has been at the ceiling throughout the study period &mdash; continuous drift modelling is not
+  applicable. Primary metric: resistance prevalence rose from ~44% (2008) to ~70% (2022),
+  logistic trend slope = +0.098 logit/yr (R&sup2;=0.66, p=0.002). Forecast: ~77% by 2026.
+  OXA-type carbapenemases dominate throughout.
+</div>
 
-<h2>Model</h2>
-<p>Independent <strong>XGBoost regression models</strong> are trained for each species with
-Optuna hyperparameter tuning (60 trials). The target is <code>log2(MIC)</code>.
-A <strong>3x sample weight</strong> is applied to resistant isolates (MIC &ge; 8 mg/L) to prevent
-the model from ignoring the clinically relevant tail.</p>
-<h3>Train/Test Split</h3>
-<p>Strictly time-ordered: <strong>Train 2004-2018 | Test 2019-2022</strong>.
-No random shuffling (would constitute data leakage).</p>
-<h3>Key Features</h3>
+<h2>Models</h2>
+<p><strong>K. pneumoniae:</strong> XGBoost Regressor + RF baseline, predicting log&#x2082;(MIC).
+Resistant isolates weighted 3x. 60 Optuna trials. Train 2008-2018 | Test 2019-2022 (strictly time-ordered).</p>
+<div class="table-wrap"><table>
+  <tr><th>Model</th><th>RMSE (all)</th><th>RMSE (resistant)</th><th>R&sup2;</th></tr>
+  <tr><td>RF baseline</td><td>1.56</td><td>2.87</td><td>0.63</td></tr>
+  <tr><td><strong>XGBoost tuned</strong></td><td>2.05</td><td><strong>2.56</strong></td><td>0.69</td></tr>
+</table></div>
+<p><strong>A. baumannii:</strong> XGBoost Classifier predicting P(R) per isolate, with recency
+weighting (w = 0.85^(max_year &minus; year)). Year-level prevalence aggregated from per-isolate
+P(R), then fitted with logistic regression on the logit scale. 95% CIs via Wilson score method.
+AUC-ROC = 0.981 on the 2019-2022 test period.</p>
+
+<h3>Walk-forward Cross-validation (6 folds, test years 2014-2019)</h3>
+<p>K. pneumoniae: mean RMSE 1.92 &plusmn; 0.31, R&sup2; 0.56 &plusmn; 0.12.
+A. baumannii: mean RMSE 2.43 &plusmn; 0.21, R&sup2; 0.29 &plusmn; 0.08.
+MIC90 correctly predicted at ceiling (32 mg/L) in all A. bau folds.</p>
+
+<h3>Country-stratified Hybrid MIC90</h3>
+<p>If global P(R) &gt; 10%: MIC90 = panel ceiling (32 mg/L).
+If global P(R) &le; 10%: per-country P(R) check; ceiling applied per country where exceeded;
+weighted average by sample size. This hybrid correctly produces 32 mg/L for K. pn test years
+and outperforms global-only logic in transitional (2014-2018) folds.</p>
+
+<h3>Key Features (83 for K. pn; 76 for A. bau)</h3>
 <div class="table-wrap"><table>
   <tr><th>Feature</th><th>Type</th><th>Rationale</th></tr>
-  <tr><td><code>year</code></td><td>continuous</td><td>Primary creep driver</td></tr>
+  <tr><td><code>year</code></td><td>continuous</td><td>Primary creep / prevalence driver</td></tr>
   <tr><td><code>KPC_pos</code> ... <code>GES_pos</code></td><td>binary</td><td>Carbapenemase gene presence</td></tr>
-  <tr><td><code>ctry_*</code></td><td>OHE</td><td>Country of isolation (65 dummies)</td></tr>
+  <tr><td><code>ctry_*</code></td><td>OHE</td><td>Country (n&lt;50 training isolates collapsed to &ldquo;Other&rdquo;)</td></tr>
   <tr><td><code>spec_*</code></td><td>OHE</td><td>Specimen source (5 categories)</td></tr>
-  <tr><td><code>is_censored</code></td><td>binary</td><td>Data-structure artifact (panel floor)</td></tr>
+  <tr><td><code>ward_*</code></td><td>OHE</td><td>Hospital setting; top SHAP driver for A. baumannii</td></tr>
   <tr><td><code>pct_censored_year</code></td><td>float</td><td>Controls for panel methodology changes</td></tr>
   <tr><td><code>military_proxy</code></td><td>binary</td><td>Wound + male + 18-60; combat-wound proxy</td></tr>
 </table></div>
 
-<h2>Results — <em>K. pneumoniae</em></h2>
-<div class="table-wrap"><table>
-  <tr><th>Model</th><th>RMSE (all)</th><th>RMSE (resistant subset)</th><th>MAE (resistant)</th></tr>
-  <tr><td>RF baseline</td><td>1.558</td><td>2.869</td><td>2.180</td></tr>
-  <tr><td><strong>XGBoost tuned</strong></td><td>1.758</td><td><strong>1.960</strong></td><td><strong>1.127</strong></td></tr>
-</table></div>
-<p>All metrics in log2 units. <strong>RMSE on the resistant subset is the clinically relevant figure.</strong>
-XGBoost improves it by 32% vs the RF baseline. The higher overall RMSE is expected: XGBoost is less
-aggressive at fitting the censoring floor, which is the right trade-off.</p>
-
-<h2>Important Caveats</h2>
+<h2>Caveats</h2>
 <ul>
-  <li><strong>Panel ceiling artifact:</strong> Post-2018 MIC90 is capped at 32 mg/L by the instrument range.
-      The true MIC90 may be 64, 128 mg/L or higher.</li>
-  <li><strong><code>is_censored</code> in SHAP plots</strong> is a data-structure variable, not biology.
-      Censored isolates are structurally at the MIC floor.</li>
-  <li><strong>NDM underrepresented in training:</strong> NDM only became prevalent after 2018 and is therefore
-      underweighted in SHAP. Its importance will rise when models are retrained on post-2020 data.</li>
+  <li><strong>Panel ceiling artifact:</strong> ATLAS reports all MIC &ge; 32 mg/L as exactly 32 mg/L.
+      True MIC90 may be higher for resistant populations.</li>
+  <li><strong>NDM underrepresented in training:</strong> NDM rose sharply post-2018 and is therefore
+      underweighted in SHAP values from the 2008-2018 training window.</li>
+  <li><strong>A. bau walk-forward CV:</strong> Regression quality is low (R&sup2;=0.29) by design &mdash;
+      bimodal distributions are poor targets for regression. Prevalence trend is the correct primary metric.</li>
 </ul>
 
 <h2>API Endpoints</h2>
 <div class="table-wrap"><table>
   <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
   <tr><td><span class="endpoint">GET /health</span></td><td>GET</td><td>Service status, loaded models</td></tr>
-  <tr><td><span class="endpoint">GET /api/trend/mic90</span></td><td>GET</td><td>MIC90 by year: actual + predicted + forecast. <code>?species=kpneumoniae</code></td></tr>
-  <tr><td><span class="endpoint">GET /api/country-stats</span></td><td>GET</td><td>Resistance rate and MIC90 by country. <code>?species=kpneumoniae</code></td></tr>
-  <tr><td><span class="endpoint">GET /api/features/importance</span></td><td>GET</td><td>Top 20 SHAP features. <code>?species=kpneumoniae</code></td></tr>
+  <tr><td><span class="endpoint">GET /api/trend/mic90</span></td><td>GET</td><td>MIC90 by year: actual + predicted + forecast. <code>?species=kpneumoniae|abaumannii</code></td></tr>
+  <tr><td><span class="endpoint">GET /api/country-stats</span></td><td>GET</td><td>Resistance rate and MIC90 by country. <code>?species=kpneumoniae|abaumannii</code></td></tr>
+  <tr><td><span class="endpoint">GET /api/features/importance</span></td><td>GET</td><td>Top 20 SHAP features. <code>?species=kpneumoniae|abaumannii</code></td></tr>
   <tr><td><span class="endpoint">POST /api/predict</span></td><td>POST</td><td>Single-isolate MIC prediction. Include <code>species</code> in body.</td></tr>
-  <tr><td><span class="endpoint">GET /api/countries</span></td><td>GET</td><td>Countries known to the model. <code>?species=kpneumoniae</code></td></tr>
+  <tr><td><span class="endpoint">GET /api/countries</span></td><td>GET</td><td>Countries known to the model. <code>?species=kpneumoniae|abaumannii</code></td></tr>
 </table></div>
 
 <footer>
   Data source: ATLAS (Pfizer/Vivli), controlled access. &nbsp;|&nbsp;
-  Model: XGBoost + Optuna, trained on ATLAS 2004-2018. &nbsp;|&nbsp;
+  Models: XGBoost + Optuna, trained on ATLAS 2008-2018. &nbsp;|&nbsp;
   <a href="/docs">Swagger UI</a> &nbsp;|&nbsp;
   <a href="/redoc">ReDoc</a>
 </footer>
