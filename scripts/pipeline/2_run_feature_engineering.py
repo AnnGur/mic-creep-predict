@@ -27,7 +27,12 @@ import seaborn as sns
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from data.loader import ATLASLoader, load_entasis_abaumannii
+from data.loader import (
+    ATLASLoader,
+    load_entasis_abaumannii,
+    load_sidero_wt,
+    load_venatorx_kpneumoniae,
+)
 from data.preprocessor import MICPreprocessor
 from features.engineer import (
     CARBAPENEMASE_GENES,
@@ -259,12 +264,27 @@ def main() -> None:
     df = load_and_parse(args.data_dir, species_name)
 
     if args.species == "abaumannii":
-        print(f"  Merging Entasis supplementary data (training period only)...")
-        entasis_df = load_entasis_abaumannii(args.data_dir)
-        # Align columns: keep only columns present in the ATLAS dataframe
-        shared_cols = [c for c in df.columns if c in entasis_df.columns]
-        df = pd.concat([df, entasis_df[shared_cols]], ignore_index=True)
+        print(f"  Merging supplementary datasets (training period only)...")
+        for loader_fn, label in [
+            (lambda d: load_entasis_abaumannii(d), "Entasis"),
+            (lambda d: load_sidero_wt(d, "Acinetobacter baumannii"), "SIDERO-WT"),
+        ]:
+            supp = loader_fn(args.data_dir)
+            shared_cols = [c for c in df.columns if c in supp.columns]
+            df = pd.concat([df, supp[shared_cols]], ignore_index=True)
         print(f"  Combined A. baumannii: {len(df):,} rows "
+              f"({df['Year'].min()}-{df['Year'].max()})")
+
+    if args.species == "kpneumoniae":
+        print(f"  Merging supplementary datasets (training period only)...")
+        for loader_fn, label in [
+            (lambda d: load_sidero_wt(d, "Klebsiella pneumoniae"), "SIDERO-WT"),
+            (lambda d: load_venatorx_kpneumoniae(d), "Venatorx"),
+        ]:
+            supp = loader_fn(args.data_dir)
+            shared_cols = [c for c in df.columns if c in supp.columns]
+            df = pd.concat([df, supp[shared_cols]], ignore_index=True)
+        print(f"  Combined K. pneumoniae: {len(df):,} rows "
               f"({df['Year'].min()}-{df['Year'].max()})")
 
     print(f"\n[2/{n}] Specimen type mapping")

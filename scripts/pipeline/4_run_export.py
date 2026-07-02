@@ -43,9 +43,11 @@ MODELS_DIR = PROJECT_ROOT / "models"
 REPORTS    = PROJECT_ROOT / "reports" / "api"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
-EUCAST_R         = 8
-LOG2_R           = np.log2(EUCAST_R)
-CREEP_SLOPE_LOG2 = 0.142   # +1.97 mg/L/yr ≈ +0.142 log2/yr at midpoint MIC
+EUCAST_R           = 8
+LOG2_R             = np.log2(EUCAST_R)
+CREEP_SLOPE_LOG2   = 0.142   # +1.97 mg/L/yr ≈ +0.142 log2/yr at midpoint MIC
+PANEL_CEILING_MIC  = 32.0    # ATLAS meropenem panel ceiling
+PANEL_CEILING_LOG2 = np.log2(PANEL_CEILING_MIC)
 
 _json_suffix = ""  # set in main() based on --species arg; used by export helpers
 
@@ -154,7 +156,7 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_mo
     anchor_log2 = np.log2(records[2022]["predicted_mic90"])
     for yr in range(2023, 2027):
         delta = (yr - 2022) * CREEP_SLOPE_LOG2
-        forecast_log2 = anchor_log2 + delta
+        forecast_log2 = min(anchor_log2 + delta, PANEL_CEILING_LOG2)
         records[yr] = {
             "year":                int(yr),
             "forecast_mic90":      round(float(2 ** forecast_log2), 4),
