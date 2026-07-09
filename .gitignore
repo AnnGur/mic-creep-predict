@@ -21,9 +21,14 @@ __pycache__/
 models/*.pkl
 models/*.json
 
-# Presentation (generated locally, not versioned)
+# Generated reports (local only)
 *.pptx
-scripts/make_presentation.py
+reports/model/*.md
+reports/atlas_eda_analysis.md
+reports/final_report.html
+reports/MIC_Creep_KSE_Final_Report.ipynb
+scripts/utils/generate_*.py
+scripts/utils/make_presentation.py
 
 # Local screenshots / reference images
 *.png
