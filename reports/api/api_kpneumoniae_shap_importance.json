@@ -2,121 +2,121 @@
   {
     "rank": 1,
     "feature": "KPC_pos",
-    "mean_abs_shap": 0.98592,
+    "mean_abs_shap": 0.97673,
     "note": "KPC carbapenemase \u2014 main resistance driver in training period"
   },
   {
     "rank": 2,
     "feature": "OXA_pos",
-    "mean_abs_shap": 0.5316,
+    "mean_abs_shap": 0.5305,
     "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
   },
   {
     "rank": 3,
     "feature": "NDM_pos",
-    "mean_abs_shap": 0.45744,
+    "mean_abs_shap": 0.45411,
     "note": "NDM \u2014 fastest-rising mechanism; bypasses avibactam combinations"
   },
   {
     "rank": 4,
-    "feature": "ctry_China",
-    "mean_abs_shap": 0.24098,
-    "note": "Country effect: China"
+    "feature": "is_censored",
+    "mean_abs_shap": 0.35942,
+    "note": "DATA ARTIFACT \u2014 censored = at panel floor; not a biological signal"
   },
   {
     "rank": 5,
-    "feature": "ctry_India",
-    "mean_abs_shap": 0.17076,
-    "note": "Country effect: India"
+    "feature": "ctry_China",
+    "mean_abs_shap": 0.30049,
+    "note": "Country effect: China"
   },
   {
     "rank": 6,
-    "feature": "ctry_Italy",
-    "mean_abs_shap": 0.13511,
-    "note": "Country effect: Italy"
+    "feature": "pct_censored_year",
+    "mean_abs_shap": 0.17077,
+    "note": "Surveillance methodology control \u2014 partial out panel artifact"
   },
   {
     "rank": 7,
-    "feature": "ward_icu",
-    "mean_abs_shap": 0.08353,
-    "note": ""
+    "feature": "ctry_India",
+    "mean_abs_shap": 0.16498,
+    "note": "Country effect: India"
   },
   {
     "rank": 8,
-    "feature": "ctry_Greece",
-    "mean_abs_shap": 0.08332,
-    "note": "Country effect: Greece"
+    "feature": "ctry_Italy",
+    "mean_abs_shap": 0.11761,
+    "note": "Country effect: Italy"
   },
   {
     "rank": 9,
-    "feature": "pct_censored_year",
-    "mean_abs_shap": 0.07938,
-    "note": "Surveillance methodology control \u2014 partial out panel artifact"
+    "feature": "ctry_Greece",
+    "mean_abs_shap": 0.07907,
+    "note": "Country effect: Greece"
   },
   {
     "rank": 10,
     "feature": "year",
-    "mean_abs_shap": 0.06624,
+    "mean_abs_shap": 0.07073,
     "note": "Temporal MIC creep signal"
   },
   {
     "rank": 11,
-    "feature": "VIM_pos",
-    "mean_abs_shap": 0.0353,
-    "note": "VIM carbapenemase gene"
-  },
-  {
-    "rank": 12,
-    "feature": "ctry_Other",
-    "mean_abs_shap": 0.03091,
-    "note": "Country effect: Other"
-  },
-  {
-    "rank": 13,
     "feature": "ctry_Brazil",
-    "mean_abs_shap": 0.02761,
+    "mean_abs_shap": 0.0373,
     "note": "Country effect: Brazil"
   },
   {
-    "rank": 14,
+    "rank": 12,
+    "feature": "VIM_pos",
+    "mean_abs_shap": 0.03714,
+    "note": "VIM carbapenemase gene"
+  },
+  {
+    "rank": 13,
     "feature": "ctry_France",
-    "mean_abs_shap": 0.02378,
+    "mean_abs_shap": 0.02087,
     "note": "Country effect: France"
   },
   {
-    "rank": 15,
-    "feature": "ctry_Guatemala",
-    "mean_abs_shap": 0.0183,
-    "note": "Country effect: Guatemala"
-  },
-  {
-    "rank": 16,
-    "feature": "spec_respiratory",
-    "mean_abs_shap": 0.01224,
-    "note": "Specimen type: respiratory"
-  },
-  {
-    "rank": 17,
-    "feature": "ctry_Chile",
-    "mean_abs_shap": 0.00876,
-    "note": "Country effect: Chile"
-  },
-  {
-    "rank": 18,
-    "feature": "ctry_United States",
-    "mean_abs_shap": 0.00842,
-    "note": "Country effect: United States"
-  },
-  {
-    "rank": 19,
+    "rank": 14,
     "feature": "age_paediatric",
-    "mean_abs_shap": 0.00841,
+    "mean_abs_shap": 0.01963,
     "note": ""
   },
   {
-    "rank": 20,
+    "rank": 15,
+    "feature": "proj_KPC_prev",
+    "mean_abs_shap": 0.01854,
+    "note": ""
+  },
+  {
+    "rank": 16,
+    "feature": "ctry_Guatemala",
+    "mean_abs_shap": 0.01832,
+    "note": "Country effect: Guatemala"
+  },
+  {
+    "rank": 17,
+    "feature": "ctry_Israel",
+    "mean_abs_shap": 0.01288,
+    "note": "Country effect: Israel"
+  },
+  {
+    "rank": 18,
     "feature": "ctry_Russia",
-    "mean_abs_shap": 0.00647,
+    "mean_abs_shap": 0.01218,
     "note": "Country effect: Russia"
+  },
+  {
+    "rank": 19,
+    "feature": "spec_respiratory",
+    "mean_abs_shap": 0.01058,
+    "note": "Specimen type: respiratory"
+  },
+  {
+    "rank": 20,
+    "feature": "ctry_Colombia",
+    "mean_abs_shap": 0.0104,
+    "note": "Country effect: Colombia"
   }
 ]
