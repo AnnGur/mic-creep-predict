@@ -126,6 +126,9 @@ export default function MethodologyPage() {
                 ["ctry_* (50-65 cols)", "OHE", "Country of isolation; countries with < 50 training isolates collapsed to 'Other'"],
                 ["KPC_pos, NDM_pos, OXA_pos, VIM_pos, IMP_pos, GES_pos", "Binary x6", "Carbapenemase gene PCR results"],
                 ["pct_censored_year", "Float", "Annual censoring rate - methodology control for panel artifact"],
+                ["lag1_pct_resistant_ctry", "Float", "Resistance rate in isolate's country in the previous year - surveillance context signal. Computed on full dataset; fallback chain: country+year → global year mean → global mean"],
+                ["KPC_x_year, NDM_x_year, OXA_x_year, VIM_x_year, IMP_x_year, GES_x_year", "Float x6", "Gene × year interaction terms - capture how each carbapenemase gene's MIC contribution shifts over time (NDM and OXA emerged post-2017; KPC plateaued)"],
+                ["proj_KPC_prev / proj_NDM_prev / proj_OXA_prev (K.pn: 3) / proj_OXA_prev (A.bau: 1)", "Float", "Logistic-curve projected gene prevalence: p(t) = 1/(1+exp(-r*(t-t0))), curves fitted on training data only. Gives XGBoost an extrapolable forward signal beyond the training horizon - tree models cannot otherwise extrapolate trends"],
               ].map(([feat, type, role]) => (
                 <tr key={feat} className="even:bg-gray-50">
                   <td className="px-3 py-2 font-mono text-xs text-gray-700">{feat}</td>
@@ -137,7 +140,8 @@ export default function MethodologyPage() {
           </table>
         </div>
         <p className="text-xs text-gray-500">
-          K. pneumoniae: 83 features (55 country dummies). A. baumannii: 76 features (54 country dummies).
+          K. pneumoniae: ~106 features (55 country dummies + 5 ward dummies + 6 gene flags + 6 gene×year + lag + 3 projected prevalence + demographics + specimen + pct_censored).
+          A. baumannii: ~96 features (same structure, 1 projected prevalence curve).
           The time split is strictly chronological - 2008-2018 train, 2019-2022 test, never shuffled.
           Pre-2008 years excluded due to sparse sampling (n &lt; 4,000/year).
         </p>
@@ -167,8 +171,9 @@ export default function MethodologyPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
-                  ["Random Forest baseline", "1.56", "2.87", "0.63"],
-                  ["XGBoost tuned (primary)", "2.05", "2.56", "0.69"],
+                  ["Random Forest baseline", "1.77", "2.95", "0.77"],
+                  ["XGBoost tuned (primary)", "2.22", "2.17", "0.63"],
+                  ["XGBoost Q0.90 (quantile)", "4.22*", "1.16", "-0.33*"],
                 ].map(([model, rmse, rmseR, r2]) => (
                   <tr key={model} className="even:bg-gray-50">
                     <td className="px-3 py-2 text-gray-700 font-medium text-xs">{model}</td>
@@ -180,7 +185,11 @@ export default function MethodologyPage() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-gray-500 mt-1">Metrics on 2019-2022 test set. Units: log&#x2082; MIC.</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Metrics on 2019-2022 test set. Units: log&#x2082; MIC.
+            *Q0.90 model is trained to predict the 90th-percentile MIC per isolate, not the mean — high RMSE/negative R&#178; on all isolates is expected; its resistant-subset RMSE (1.16) is the relevant metric.
+            XGBoost resistant-subset RMSE improved from 2.56 to 2.17 (-15%) with the addition of lag, ward, and gene&#xd7;year features.
+          </p>
         </div>
 
         <div>
@@ -211,9 +220,9 @@ export default function MethodologyPage() {
               <tbody className="divide-y divide-gray-100">
                 {[
                   ["P(R) classifier AUC-ROC", "0.981", "Near-perfect separation of resistant vs susceptible isolates"],
-                  ["Logistic trend slope", "+0.098 logit/yr", "Steady increase in resistance probability year on year"],
-                  ["Trend R² (2008-2022)", "0.659", "66% of year-to-year prevalence variance explained by time alone"],
-                  ["Trend p-value", "0.0024", "Resistance increase is statistically significant"],
+                  ["Logistic trend slope", "+0.074 logit/yr", "Steady increase in resistance probability year on year"],
+                  ["Trend R² (2008-2022)", "0.473", "47% of year-to-year prevalence variance explained by time alone"],
+                  ["Trend p-value", "0.019", "Resistance increase is statistically significant"],
                   ["Resistance prevalence 2022", "~70%", "Up from ~44% in 2008"],
                   ["Forecast 2026", "~77%", "Extrapolated from logistic trend"],
                 ].map(([metric, val, interp]) => (
@@ -309,6 +318,18 @@ export default function MethodologyPage() {
           this floor spike. The resistant subset (7-17% of isolates) is where clinical decisions are
           made - that is where predictive accuracy matters.
         </div>
+
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-800">
+          <strong>Known limitation - population MIC&#x2090; vs individual regression:</strong>{" "}
+          The XGBoost regression model predicts per-isolate log&#x2082;(MIC). The 90th percentile of
+          those predictions for pooled test-year isolates lands at 13-16 mg/L, while the actual
+          population MIC&#x2090; is 32 mg/L. The gap exists because ~15-18% of real isolates are at
+          the ATLAS panel ceiling (32 mg/L) and the regression model cannot extrapolate beyond the
+          ceiling distribution it was trained on. This is resolved by the P(R) ceiling rule
+          (see above): when population P(R) &gt; 10%, MIC&#x2090; = 32 mg/L. The regression model
+          is evaluated on individual-isolate accuracy (RMSE), not on population MIC&#x2090; directly.
+          Both metrics are reported separately.
+        </div>
       </section>
 
       {/* SHAP */}
@@ -322,17 +343,28 @@ export default function MethodologyPage() {
           global feature importance. Biological interpretation was validated by the domain expert
           against known AMR epidemiology.
         </p>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600">
-          <strong>Note on artifacts:</strong>{" "}
-          The isolate-level{" "}
-          <code className="bg-white border border-gray-200 px-1 rounded">is_censored</code>{" "}
-          flag was removed after v1 - it dominated SHAP for both species (A. baumannii rank 1
-          at mean|SHAP| 1.78; K. pneumoniae rank 2 at 0.54) despite being a data artifact, not
-          biology. Its removal allowed <code className="bg-white border border-gray-200 px-1 rounded">year</code> to
-          emerge as the top predictor for A. baumannii (0.29) and carbapenemase genes to dominate
-          K. pneumoniae - both biologically expected. The year-level aggregate{" "}
-          <code className="bg-white border border-gray-200 px-1 rounded">pct_censored_year</code>{" "}
-          is retained as a methodology control.
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-2">
+          <p>
+            <strong>Note on artifacts:</strong>{" "}
+            The isolate-level{" "}
+            <code className="bg-white border border-gray-200 px-1 rounded">is_censored</code>{" "}
+            flag was removed after v1 - it dominated SHAP for both species (A. baumannii rank 1
+            at mean|SHAP| 1.78; K. pneumoniae rank 2 at 0.54) despite being a data artifact, not
+            biology. The year-level aggregate{" "}
+            <code className="bg-white border border-gray-200 px-1 rounded">pct_censored_year</code>{" "}
+            is retained as a methodology control.
+          </p>
+          <p>
+            <strong>Current top SHAP features:</strong>{" "}
+            A. baumannii - (1){" "}
+            <code className="bg-white border border-gray-200 px-1 rounded">lag1_pct_resistant_ctry</code>{" "}
+            (0.81, dominant) - countries with high resistance in year t-1 remain high in year t;
+            (2) <code className="bg-white border border-gray-200 px-1 rounded">year</code> (0.27);
+            (3) <code className="bg-white border border-gray-200 px-1 rounded">ward_icu</code> (0.08) - ICU
+            isolates have higher resistance, biologically expected.
+            K. pneumoniae - carbapenemase gene flags and gene&#xd7;year interactions dominate,
+            consistent with the stepwise acquisition of KPC then NDM/OXA driving the resistance wave.
+          </p>
         </div>
       </section>
 

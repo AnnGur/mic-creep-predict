@@ -1,122 +1,122 @@
 [
   {
     "rank": 1,
-    "feature": "KPC_pos",
-    "mean_abs_shap": 0.97673,
-    "note": "KPC carbapenemase \u2014 main resistance driver in training period"
-  },
-  {
-    "rank": 2,
-    "feature": "OXA_pos",
-    "mean_abs_shap": 0.5305,
-    "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
-  },
-  {
-    "rank": 3,
-    "feature": "NDM_pos",
-    "mean_abs_shap": 0.45411,
-    "note": "NDM \u2014 fastest-rising mechanism; bypasses avibactam combinations"
-  },
-  {
-    "rank": 4,
-    "feature": "is_censored",
-    "mean_abs_shap": 0.35942,
-    "note": "DATA ARTIFACT \u2014 censored = at panel floor; not a biological signal"
-  },
-  {
-    "rank": 5,
-    "feature": "ctry_China",
-    "mean_abs_shap": 0.30049,
-    "note": "Country effect: China"
-  },
-  {
-    "rank": 6,
-    "feature": "pct_censored_year",
-    "mean_abs_shap": 0.17077,
-    "note": "Surveillance methodology control \u2014 partial out panel artifact"
-  },
-  {
-    "rank": 7,
-    "feature": "ctry_India",
-    "mean_abs_shap": 0.16498,
-    "note": "Country effect: India"
-  },
-  {
-    "rank": 8,
-    "feature": "ctry_Italy",
-    "mean_abs_shap": 0.11761,
-    "note": "Country effect: Italy"
-  },
-  {
-    "rank": 9,
-    "feature": "ctry_Greece",
-    "mean_abs_shap": 0.07907,
-    "note": "Country effect: Greece"
-  },
-  {
-    "rank": 10,
-    "feature": "year",
-    "mean_abs_shap": 0.07073,
-    "note": "Temporal MIC creep signal"
-  },
-  {
-    "rank": 11,
-    "feature": "ctry_Brazil",
-    "mean_abs_shap": 0.0373,
-    "note": "Country effect: Brazil"
-  },
-  {
-    "rank": 12,
-    "feature": "VIM_pos",
-    "mean_abs_shap": 0.03714,
-    "note": "VIM carbapenemase gene"
-  },
-  {
-    "rank": 13,
-    "feature": "ctry_France",
-    "mean_abs_shap": 0.02087,
-    "note": "Country effect: France"
-  },
-  {
-    "rank": 14,
-    "feature": "age_paediatric",
-    "mean_abs_shap": 0.01963,
+    "feature": "lag1_pct_resistant_ctry",
+    "mean_abs_shap": 0.75218,
     "note": ""
   },
   {
+    "rank": 2,
+    "feature": "KPC_pos",
+    "mean_abs_shap": 0.60455,
+    "note": "KPC carbapenemase \u2014 main resistance driver in training period"
+  },
+  {
+    "rank": 3,
+    "feature": "KPC_x_year",
+    "mean_abs_shap": 0.2851,
+    "note": ""
+  },
+  {
+    "rank": 4,
+    "feature": "OXA_pos",
+    "mean_abs_shap": 0.27468,
+    "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
+  },
+  {
+    "rank": 5,
+    "feature": "NDM_pos",
+    "mean_abs_shap": 0.25432,
+    "note": "NDM \u2014 fastest-rising mechanism; bypasses avibactam combinations"
+  },
+  {
+    "rank": 6,
+    "feature": "OXA_x_year",
+    "mean_abs_shap": 0.18202,
+    "note": ""
+  },
+  {
+    "rank": 7,
+    "feature": "NDM_x_year",
+    "mean_abs_shap": 0.1726,
+    "note": ""
+  },
+  {
+    "rank": 8,
+    "feature": "ctry_China",
+    "mean_abs_shap": 0.14716,
+    "note": "Country effect: China"
+  },
+  {
+    "rank": 9,
+    "feature": "ctry_India",
+    "mean_abs_shap": 0.12188,
+    "note": "Country effect: India"
+  },
+  {
+    "rank": 10,
+    "feature": "ctry_Italy",
+    "mean_abs_shap": 0.09302,
+    "note": "Country effect: Italy"
+  },
+  {
+    "rank": 11,
+    "feature": "ward_icu",
+    "mean_abs_shap": 0.08904,
+    "note": ""
+  },
+  {
+    "rank": 12,
+    "feature": "ctry_Greece",
+    "mean_abs_shap": 0.06745,
+    "note": "Country effect: Greece"
+  },
+  {
+    "rank": 13,
+    "feature": "year",
+    "mean_abs_shap": 0.06461,
+    "note": "Temporal MIC creep signal"
+  },
+  {
+    "rank": 14,
+    "feature": "pct_censored_year",
+    "mean_abs_shap": 0.05059,
+    "note": "Surveillance methodology control \u2014 partial out panel artifact"
+  },
+  {
     "rank": 15,
-    "feature": "proj_KPC_prev",
-    "mean_abs_shap": 0.01854,
+    "feature": "age_paediatric",
+    "mean_abs_shap": 0.05031,
     "note": ""
   },
   {
     "rank": 16,
-    "feature": "ctry_Guatemala",
-    "mean_abs_shap": 0.01832,
-    "note": "Country effect: Guatemala"
-  },
-  {
-    "rank": 17,
-    "feature": "ctry_Israel",
-    "mean_abs_shap": 0.01288,
-    "note": "Country effect: Israel"
-  },
-  {
-    "rank": 18,
     "feature": "ctry_Russia",
-    "mean_abs_shap": 0.01218,
+    "mean_abs_shap": 0.05019,
     "note": "Country effect: Russia"
   },
   {
+    "rank": 17,
+    "feature": "age_elderly",
+    "mean_abs_shap": 0.04854,
+    "note": ""
+  },
+  {
+    "rank": 18,
+    "feature": "proj_KPC_prev",
+    "mean_abs_shap": 0.0341,
+    "note": ""
+  },
+  {
     "rank": 19,
-    "feature": "spec_respiratory",
-    "mean_abs_shap": 0.01058,
-    "note": "Specimen type: respiratory"
+    "feature": "gender_male",
+    "mean_abs_shap": 0.02514,
+    "note": ""
   },
   {
     "rank": 20,
-    "feature": "ctry_Colombia",
-    "mean_abs_shap": 0.0104,
-    "note": "Country effect: Colombia"
+    "feature": "spec_urine",
+    "mean_abs_shap": 0.02294,
+    "note": "Specimen type: urine"
   }
 ]
