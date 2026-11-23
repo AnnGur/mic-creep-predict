@@ -2,121 +2,121 @@
   {
     "rank": 1,
     "feature": "lag1_pct_resistant_ctry",
-    "mean_abs_shap": 0.81413,
+    "mean_abs_shap": 0.64962,
     "note": ""
   },
   {
     "rank": 2,
     "feature": "year",
-    "mean_abs_shap": 0.27292,
+    "mean_abs_shap": 0.19412,
     "note": "Temporal MIC creep signal"
   },
   {
     "rank": 3,
-    "feature": "pct_censored_year",
-    "mean_abs_shap": 0.13223,
-    "note": "Surveillance methodology control \u2014 partial out panel artifact"
+    "feature": "ward_icu",
+    "mean_abs_shap": 0.15508,
+    "note": ""
   },
   {
     "rank": 4,
     "feature": "age_paediatric",
-    "mean_abs_shap": 0.11879,
+    "mean_abs_shap": 0.11539,
     "note": ""
   },
   {
     "rank": 5,
-    "feature": "ward_icu",
-    "mean_abs_shap": 0.08091,
+    "feature": "age_elderly",
+    "mean_abs_shap": 0.08112,
     "note": ""
   },
   {
     "rank": 6,
     "feature": "spec_wound",
-    "mean_abs_shap": 0.08015,
+    "mean_abs_shap": 0.06585,
     "note": "Specimen type: wound"
   },
   {
     "rank": 7,
-    "feature": "age_elderly",
-    "mean_abs_shap": 0.0719,
-    "note": ""
+    "feature": "ctry_Germany",
+    "mean_abs_shap": 0.05277,
+    "note": "Country effect: Germany"
   },
   {
     "rank": 8,
-    "feature": "gender_male",
-    "mean_abs_shap": 0.05652,
-    "note": ""
+    "feature": "pct_censored_year",
+    "mean_abs_shap": 0.04991,
+    "note": "Surveillance methodology control \u2014 partial out panel artifact"
   },
   {
     "rank": 9,
-    "feature": "spec_respiratory",
-    "mean_abs_shap": 0.05431,
-    "note": "Specimen type: respiratory"
+    "feature": "proj_OXA_prev",
+    "mean_abs_shap": 0.04761,
+    "note": ""
   },
   {
     "rank": 10,
-    "feature": "ctry_Germany",
-    "mean_abs_shap": 0.05423,
-    "note": "Country effect: Germany"
+    "feature": "spec_urine",
+    "mean_abs_shap": 0.04455,
+    "note": "Specimen type: urine"
   },
   {
     "rank": 11,
     "feature": "ctry_United States",
-    "mean_abs_shap": 0.05304,
+    "mean_abs_shap": 0.04274,
     "note": "Country effect: United States"
   },
   {
     "rank": 12,
-    "feature": "spec_urine",
-    "mean_abs_shap": 0.04965,
-    "note": "Specimen type: urine"
-  },
-  {
-    "rank": 13,
     "feature": "ctry_France",
-    "mean_abs_shap": 0.04559,
+    "mean_abs_shap": 0.04129,
     "note": "Country effect: France"
   },
   {
-    "rank": 14,
-    "feature": "OXA_pos",
-    "mean_abs_shap": 0.04341,
-    "note": "OXA-48/OXA-232 carbapenemase \u2014 dominant in Europe and Middle East"
-  },
-  {
-    "rank": 15,
-    "feature": "spec_blood",
-    "mean_abs_shap": 0.04247,
-    "note": "Specimen type: blood"
-  },
-  {
-    "rank": 16,
-    "feature": "ctry_Czech Republic",
-    "mean_abs_shap": 0.04236,
-    "note": "Country effect: Czech Republic"
-  },
-  {
-    "rank": 17,
-    "feature": "ward_emergency",
-    "mean_abs_shap": 0.04026,
-    "note": ""
-  },
-  {
-    "rank": 18,
-    "feature": "ctry_China",
-    "mean_abs_shap": 0.03567,
-    "note": "Country effect: China"
-  },
-  {
-    "rank": 19,
+    "rank": 13,
     "feature": "ctry_Australia",
-    "mean_abs_shap": 0.02775,
+    "mean_abs_shap": 0.03679,
     "note": "Country effect: Australia"
   },
   {
-    "rank": 20,
+    "rank": 14,
+    "feature": "gender_male",
+    "mean_abs_shap": 0.03674,
+    "note": ""
+  },
+  {
+    "rank": 15,
+    "feature": "spec_respiratory",
+    "mean_abs_shap": 0.03506,
+    "note": "Specimen type: respiratory"
+  },
+  {
+    "rank": 16,
+    "feature": "spec_blood",
+    "mean_abs_shap": 0.03175,
+    "note": "Specimen type: blood"
+  },
+  {
+    "rank": 17,
+    "feature": "ctry_Czech Republic",
+    "mean_abs_shap": 0.03014,
+    "note": "Country effect: Czech Republic"
+  },
+  {
+    "rank": 18,
+    "feature": "ctry_Canada",
+    "mean_abs_shap": 0.02545,
+    "note": "Country effect: Canada"
+  },
+  {
+    "rank": 19,
     "feature": "ctry_Italy",
-    "mean_abs_shap": 0.0227,
+    "mean_abs_shap": 0.02406,
     "note": "Country effect: Italy"
+  },
+  {
+    "rank": 20,
+    "feature": "ward_emergency",
+    "mean_abs_shap": 0.02325,
+    "note": ""
   }
 ]

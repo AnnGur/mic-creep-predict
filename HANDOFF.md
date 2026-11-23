@@ -104,7 +104,7 @@ npm run dev
 ## Current model results (as of 2026-07-02)
 
 ### K. pneumoniae + Meropenem
-- Training data: ATLAS + SIDERO-WT + Venatorx, 2008-2018 (64,429 rows, 90 features)
+- Training data: ATLAS + SIDERO-WT + Venatorx, 2008-2018 (64,429 rows, 93 feature columns)
 - Test data: 2019-2022 (26,681 rows)
 
 | Model | RMSE (all) | R2 | RMSE (resistant) |
@@ -118,20 +118,20 @@ RMSE on resistant subset (MIC >= 8 mg/L) is the clinically relevant metric - XGB
 Top SHAP features: `lag1_pct_resistant_ctry`, `KPC_pos`, `OXA_pos`, `KPC_x_year`, `NDM_pos`
 
 ### A. baumannii + Meropenem
-- Training data: ATLAS only (SIDERO/Venatorx removed - trial enrollment selection bias), 2008-2018 (20,828 rows, 83 features)
+- Training data: ATLAS only (SIDERO/Venatorx/Entasis excluded - trial enrollment selection bias), 2008-2018 (20,828 rows, 84 feature columns). NOTE: the 2026-07-22 retrain was run without `--atlas-only` and silently added 6,181 supplementary rows in 2014-2018 (27,009 rows); rebuilt ATLAS-only and retrained on 2026-11-23. Always pass `--atlas-only` for A. baumannii.
 - Test data: 2019-2022
 
 | Model | RMSE (all) | R2 | RMSE (resistant) |
 |---|---|---|---|
-| RF baseline | 2.50 | 0.33 | 1.65 |
-| XGBoost tuned | 2.69 | 0.23 | 1.03 |
-| XGBoost Q0.90 | 3.67 | -0.44 | **0.26** |
+| RF baseline | 2.51 | 0.33 | 1.62 |
+| XGBoost tuned | 2.68 | 0.23 | 0.99 |
+| XGBoost Q0.90 | 3.66 | -0.43 | **0.28** |
 
 **Primary metric is the P(R) prevalence classifier**, not RMSE:
-- AUC-ROC: 0.981 (XGBoost binary classifier per isolate)
-- Logistic trend on logit scale: slope = +0.098 logit/yr, R2 = 0.659, p = 0.0024
-- Observed: 44% resistant in 2019 -> 70% in 2022
-- Forecast: ~77% by 2026
+- AUC-ROC: 0.845 on 2019-2022 (XGBoost binary classifier per isolate, recency-weighted; sensitivity 0.94, specificity 0.50 at a 0.5 threshold; verified 2026-11-23 with `scripts/pipeline/7_verify_production.py`). An earlier 0.981 figure could not be reproduced on the mixed data, ATLAS-only data, train years or pooled years (all give about 0.84-0.85); its origin is unknown. Tuning the classifier and adding Opt7 features gave no gain (`reports/model/pr_classifier_tuning_abaumannii.md`).
+- Logistic trend on logit scale (fit 2008-2018): slope = +0.0976 logit/yr, R2 = 0.659, p = 0.0024 (reports/api/api_abaumannii_prevalence_trend.json). 11 autocorrelated annual points, so the p-value is optimistic.
+- Observed: 44% resistant in 2008, a step to 62% in 2012, 57-69% in 2013-2018, then 70.0 / 69.5 / 71.2 / 67.3% in 2019-2022 (flat over the test window; the old note '44% in 2019' was wrong, 44% is 2008). The fitted trend predicts 76.8% for 2022 against 67.3% observed.
+- Forecast: the raw-trend extrapolation gives 83% by 2026, but it already overshoots the observed test years, so treat it as an upper-end projection, not a measured creep rate. With a fixed country mix (`reports/model/prevalence_trend_check_abaumannii.md`) the test-year rate is 59-64% and the 2008-2022 slope is +0.028 logit/yr (p 0.034) against +0.078 raw. Part of the raw rise in the test years is which countries contribute isolates.
 
 A. baumannii MIC90 is at the ATLAS panel ceiling (32 mg/L) throughout all years - resistance was established before 2008. The MIC90 regression is secondary; prevalence is the story.
 
@@ -208,7 +208,7 @@ git push origin main
 
 ## What still needs to be done (challenge submission)
 
-- [ ] Methodology page: update feature counts (now 90 K.pn / 83 A.bau, was 83/76)
+- [ ] Methodology page: update feature counts (parquets now have 93 K.pn / 84 A.bau columns; the API methodology page in src/api/main.py may still show older counts)
 - [ ] Final write-up / submission document
 - [ ] SHAP validation with domain expert (biological plausibility check)
 - [ ] Supabase setup for aggregated results (optional for MVP)

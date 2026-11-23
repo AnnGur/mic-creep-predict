@@ -5,7 +5,8 @@
     "actual_mic50": 2.0,
     "pct_resistant": 44.31,
     "n": 2374,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 48.8
   },
   {
     "year": 2009,
@@ -13,7 +14,8 @@
     "actual_mic50": 4.0,
     "pct_resistant": 46.61,
     "n": 2746,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 53.7
   },
   {
     "year": 2010,
@@ -21,7 +23,8 @@
     "actual_mic50": 4.0,
     "pct_resistant": 49.56,
     "n": 2149,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 54.4
   },
   {
     "year": 2011,
@@ -29,7 +32,8 @@
     "actual_mic50": 1.0,
     "pct_resistant": 44.27,
     "n": 1466,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 51.5
   },
   {
     "year": 2012,
@@ -37,7 +41,8 @@
     "actual_mic50": 16.0,
     "pct_resistant": 62.45,
     "n": 1643,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 64.3
   },
   {
     "year": 2013,
@@ -45,95 +50,105 @@
     "actual_mic50": 16.0,
     "pct_resistant": 64.04,
     "n": 1891,
-    "source": "train_actual"
+    "source": "train_actual",
+    "pct_resistant_standardised": 64.8
   },
   {
     "year": 2014,
     "actual_mic90": 32.0,
     "actual_mic50": 16.0,
-    "pct_resistant": 66.08,
-    "n": 2686,
-    "source": "train_actual"
+    "pct_resistant": 65.8,
+    "n": 2196,
+    "source": "train_actual",
+    "pct_resistant_standardised": 64.5
   },
   {
     "year": 2015,
-    "actual_mic90": 64.0,
+    "actual_mic90": 32.0,
     "actual_mic50": 16.0,
-    "pct_resistant": 65.61,
-    "n": 2527,
-    "source": "train_actual"
+    "pct_resistant": 65.98,
+    "n": 1843,
+    "source": "train_actual",
+    "pct_resistant_standardised": 65.3
   },
   {
     "year": 2016,
-    "actual_mic90": 128.0,
+    "actual_mic90": 32.0,
     "actual_mic50": 16.0,
-    "pct_resistant": 62.76,
-    "n": 3531,
-    "source": "train_actual"
+    "pct_resistant": 64.79,
+    "n": 1738,
+    "source": "train_actual",
+    "pct_resistant_standardised": 62.6
   },
   {
     "year": 2017,
-    "actual_mic90": 128.0,
+    "actual_mic90": 32.0,
     "actual_mic50": 32.0,
-    "pct_resistant": 55.26,
-    "n": 2490,
-    "source": "train_actual"
+    "pct_resistant": 57.06,
+    "n": 885,
+    "source": "train_actual",
+    "pct_resistant_standardised": 58.3
   },
   {
     "year": 2018,
-    "actual_mic90": 128.0,
+    "actual_mic90": 32.0,
     "actual_mic50": 32.0,
-    "pct_resistant": 60.47,
-    "n": 3506,
-    "source": "train_actual"
+    "pct_resistant": 69.43,
+    "n": 1897,
+    "source": "train_actual",
+    "pct_resistant_standardised": 65.1
   },
   {
     "year": 2019,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 22.0804,
+    "predicted_mic50": 20.5065,
     "pct_resistant": 69.95,
-    "pct_resistant_pred": 77.44,
+    "pct_resistant_pred": 80.61,
     "n": 3621,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 65.01
+    "pct_resistant_prob": 71.3,
+    "pct_resistant_standardised": 63.6
   },
   {
     "year": 2020,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 21.1876,
+    "predicted_mic50": 20.3439,
     "pct_resistant": 69.45,
-    "pct_resistant_pred": 79.29,
+    "pct_resistant_pred": 81.59,
     "n": 3264,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 66.34
+    "pct_resistant_prob": 71.91,
+    "pct_resistant_standardised": 61.2
   },
   {
     "year": 2021,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 19.3413,
+    "predicted_mic50": 21.382,
     "pct_resistant": 71.22,
-    "pct_resistant_pred": 76.51,
+    "pct_resistant_pred": 81.33,
     "n": 3503,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 66.39
+    "pct_resistant_prob": 72.77,
+    "pct_resistant_standardised": 62.1
   },
   {
     "year": 2022,
     "actual_mic90": 32.0,
     "predicted_mic90": 32.0,
     "actual_mic50": 32.0,
-    "predicted_mic50": 20.3919,
+    "predicted_mic50": 20.3095,
     "pct_resistant": 67.32,
-    "pct_resistant_pred": 76.18,
+    "pct_resistant_pred": 79.3,
     "n": 3149,
     "source": "test_actual_and_predicted",
-    "pct_resistant_prob": 66.7
+    "pct_resistant_prob": 71.92,
+    "pct_resistant_standardised": 58.8
   },
   {
     "year": 2023,

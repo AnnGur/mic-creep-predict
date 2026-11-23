@@ -370,17 +370,17 @@ enrollment cohorts with selection bias toward treatment-failure isolates.</p>
 Resistant isolates weighted 3x. 60 Optuna trials. Train 2008-2018 | Test 2019-2022 (strictly time-ordered).</p>
 <div class="table-wrap"><table>
   <tr><th>Model</th><th>RMSE (all)</th><th>RMSE (resistant)</th><th>R&sup2;</th></tr>
-  <tr><td>RF baseline</td><td>1.56</td><td>2.87</td><td>0.63</td></tr>
-  <tr><td><strong>XGBoost tuned</strong></td><td>2.05</td><td><strong>2.56</strong></td><td>0.69</td></tr>
+  <tr><td>RF baseline</td><td>1.77</td><td>2.95</td><td>0.77</td></tr>
+  <tr><td><strong>XGBoost tuned</strong></td><td>2.22</td><td><strong>2.17</strong></td><td>0.63</td></tr>
 </table></div>
 <p><strong>A. baumannii:</strong> XGBoost Classifier predicting P(R) per isolate, with recency
 weighting (w = 0.85^(max_year &minus; year)). Year-level prevalence aggregated from per-isolate
 P(R), then fitted with logistic regression on the logit scale. 95% CIs via Wilson score method.
-AUC-ROC = 0.981 on the 2019-2022 test period.</p>
+AUC-ROC = 0.845 on the 2019-2022 test period (sensitivity 0.94, specificity 0.50 at a 0.5 threshold).</p>
 
 <h3>Walk-forward Cross-validation (6 folds, test years 2014-2019)</h3>
 <p>K. pneumoniae: mean RMSE 1.92 &plusmn; 0.31, R&sup2; 0.56 &plusmn; 0.12.
-A. baumannii: mean RMSE 2.43 &plusmn; 0.21, R&sup2; 0.29 &plusmn; 0.08.
+A. baumannii: mean RMSE 2.44 &plusmn; 0.26, R&sup2; 0.29 &plusmn; 0.09.
 MIC90 correctly predicted at ceiling (32 mg/L) in all A. bau folds.</p>
 
 <h3>Country-stratified Hybrid MIC90</h3>

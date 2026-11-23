@@ -17,6 +17,7 @@ type TrendRow = {
   pct_resistant?: number;
   pct_resistant_prob?: number;
   pct_resistant_pred?: number;
+  pct_resistant_standardised?: number;
   source: string;
 };
 
@@ -28,6 +29,7 @@ type Props = {
 const COLOURS = {
   actual:    "#2563eb",
   predicted: "#16a34a",
+  standardised: "#d97706",
   split:     "#6b7280",
 };
 
@@ -54,7 +56,10 @@ export default function ResistanceTrendChart({ data, auc }: Props) {
       actual:    d.pct_resistant ?? null,
       // prefer P(R) classifier probability; fall back to regression-threshold prediction
       predicted: d.pct_resistant_prob ?? d.pct_resistant_pred ?? null,
+      // observed rate re-weighted to a fixed country mix (A. baumannii only)
+      standardised: d.pct_resistant_standardised ?? null,
     }));
+  const hasStandardised = rows.some((r) => r.standardised != null);
 
   const aucLabel = auc != null ? ` (AUC=${auc.toFixed(3)})` : "";
 
@@ -106,6 +111,16 @@ export default function ResistanceTrendChart({ data, auc }: Props) {
           dot={{ r: 3 }}
           connectNulls
         />
+        {hasStandardised && (
+          <Line
+            dataKey="standardised"
+            name="Country-standardised % resistant"
+            stroke={COLOURS.standardised}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            connectNulls
+          />
+        )}
       </ComposedChart>
     </ResponsiveContainer>
   );

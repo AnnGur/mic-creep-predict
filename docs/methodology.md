@@ -19,7 +19,8 @@ Both pathogens are WHO Critical Priority pathogens for carbapenem resistance. *K
 **Dataset**: ATLAS (Antimicrobial Testing Leadership and Surveillance), Pfizer/Vivli
 **Access**: Vivli AMR Surveillance Platform (controlled access)
 **Species covered**: *K. pneumoniae* + Meropenem; *A. baumannii* + Meropenem
-**Records**: 89,572 isolates (*K. pneumoniae*), additional cohort for *A. baumannii*; 2004-2022
+**Records**: *K. pneumoniae*: 84,016 ATLAS isolates with a meropenem MIC in 2008-2022, plus 7,094 supplementary isolates (SIDERO-WT, Venatorx) in the 2014-2018 training years, 91,110 modelled rows in total. *A. baumannii*: 34,365 ATLAS isolates, ATLAS only, no supplementary data. Years modelled: 2008-2022.
+**Data provenance**: the ATLAS file labels each isolate with a study (TEST, ATLAS, Inform); there is no SMART label, and Merck/SMART data are not used. TEST and Inform are believed to be Pfizer-run studies; confirm against the Vivli data dictionary before submission. A retrain on 2026-07-22 had accidentally added 6,181 supplementary rows (2014-2018) to the *A. baumannii* training data; this was corrected on 2026-11-23 by rebuilding with `--atlas-only` and retraining.
 **Geographic coverage**: 66 countries across 6 continents
 
 ATLAS records patient-level MIC measurements alongside metadata: country, year, sex, age group, specimen source, and genotypic carbapenemase gene results (KPC, NDM, OXA, VIM, IMP, GES) where available.
@@ -139,40 +140,95 @@ Secondary metric: **MIC90 predicted vs actual by year** (2019-2022).
 
 ### 7.1 Model Performance
 
-| Model | RMSE all | RMSE resistant | MAE resistant | N resistant |
-|-------|----------|----------------|---------------|-------------|
-| RF baseline | 1.558 | 2.869 | 2.180 | 4,305 |
-| **XGBoost tuned** | **1.758** | **1.960** | **1.127** | 4,305 |
+Source: `reports/model/model_results_{species}.md` (retrain of 2026-07). Test set 2019-2022; resistant = MIC >= 8 mg/L (4,305 *K. pneumoniae* and 9,415 *A. baumannii* test isolates).
 
-All metrics in log2 units. XGBoost improves resistant-subset RMSE by **32%** over the RF baseline.
+*K. pneumoniae* + Meropenem (93 feature columns):
 
-### 7.2 MIC90 Trend - Predicted vs Actual
+| Model | RMSE all | RMSE resistant | MAE resistant |
+|-------|----------|----------------|---------------|
+| RF baseline | 1.772 | 2.947 | 1.995 |
+| **XGBoost tuned** (3x resistant weight) | 2.224 | **2.172** | 1.350 |
+| XGBoost Q0.90 | 4.224 | 1.161 | 0.656 |
 
-| Year | Actual (log2) | RF | XGBoost |
-|------|---------------|----|---------| 
-| 2019 | 5.00 | 2.58 | 3.66 |
-| 2020 | 5.00 | 2.80 | 3.87 |
-| 2021 | 5.00 | 3.11 | 3.99 |
-| 2022 | 5.00 | 2.87 | 3.92 |
+*A. baumannii* + Meropenem (84 feature columns):
 
-Actual MIC90 = log2(5) = ~32 mg/L in all test years due to the panel ceiling artifact. Both models correctly predict an upward trend. XGBoost gets within approximately 1 log2 dilution of the ceiling.
+| Model | RMSE all | RMSE resistant | MAE resistant |
+|-------|----------|----------------|---------------|
+| RF baseline | 2.509 | 1.623 | 1.310 |
+| **XGBoost tuned** (3x resistant weight) | 2.684 | **0.995** | 0.687 |
+| XGBoost Q0.90 | 3.657 | 0.275 | 0.099 |
 
-### 7.3 Key Driver Analysis (SHAP)
+All metrics in log2 units. Overall RMSE is dominated by the large share of isolates imputed at the censoring floor, so the resistant-subset RMSE is the clinically relevant metric. The RF baseline has lower overall RMSE; the 3x-weighted XGBoost trades overall RMSE for accuracy on resistant isolates. For *A. baumannii* the primary reported output is the resistance-prevalence trend (binary P(R) classifier with a logistic trend fit, exported to `api_abaumannii_prevalence_trend.json`), not MIC regression.
 
-| Rank | Feature | Mean |SHAP| | Note |
-|------|---------|------------|------|
-| 1 | KPC_pos | 0.943 | KPC carbapenemase - dominant in training period 2004-2018 |
-| 2 | is_censored | 0.543 | Data-structure artifact - not a biological predictor |
-| 3 | OXA_pos | 0.504 | OXA carbapenemase - dominant in Europe and Middle East |
-| 4 | NDM_pos | 0.438 | NDM - bypasses avibactam combinations; underrepresented in train |
-| 5 | pct_censored_year | 0.331 | Surveillance methodology control |
-| 6 | ctry_China | 0.304 | High-resistance country |
-| 7 | ctry_India | 0.160 | NDM origin country |
-| 10 | year | 0.071 | Temporal creep signal |
+### 7.2 MIC90 Trend - Predicted vs Actual (*K. pneumoniae*)
 
-KPC ranks above NDM because the training period (2004-2018) is KPC-dominated. NDM only became prevalent after 2018 and is underrepresented in training. This is a data recency limitation, not a model error.
+| Year | Actual MIC90 (mg/L) | Predicted MIC90 (mg/L) | % resistant actual | % resistant predicted |
+|------|---------------------|------------------------|--------------------|-----------------------|
+| 2018 (train) | 16 | | 11.5 | |
+| 2019 | 32 | 32 | 14.9 | 13.0 |
+| 2020 | 32 | 32 | 15.2 | 14.2 |
+| 2021 | 32 | 32 | 18.1 | 15.8 |
+| 2022 | 32 | 32 | 16.1 | 15.6 |
 
-For *A. baumannii*, OXA-type genes are expected to rank highest in SHAP given their dominance in that species throughout the surveillance period.
+Actual MIC90 reaches the 32 mg/L panel ceiling from 2019, so MIC90 cannot rise further in the data and is right-censored. The hybrid MIC90 post-processing (global P(R) above 10% gives the 32 mg/L ceiling, otherwise a country-stratified weighted average; implemented in `4_run_export.py`) reproduces the ceiling in all test years. Resistance prevalence rose from 3.3% (2008) to 11.5% (2018) and 14.9-18.1% in 2019-2022, and the model tracks it with a small underestimate in 2021.
+
+### 7.3 Key Driver Analysis (SHAP, *K. pneumoniae*)
+
+Source: `reports/api/api_kpneumoniae_shap_importance.json`.
+
+| Rank | Feature | Mean abs SHAP | Note |
+|------|---------|---------------|------|
+| 1 | lag1_pct_resistant_ctry | 0.752 | Previous-year resistance rate in the country |
+| 2 | KPC_pos | 0.605 | KPC carbapenemase, main driver in training period |
+| 3 | KPC_x_year | 0.285 | KPC by year interaction |
+| 4 | OXA_pos | 0.275 | OXA-48-like, dominant in Europe and Middle East |
+| 5 | NDM_pos | 0.254 | NDM, fastest-rising mechanism |
+| 6 | OXA_x_year | 0.182 | |
+| 7 | NDM_x_year | 0.173 | |
+| 8 | ctry_China | 0.147 | High-resistance country |
+| 9 | ctry_India | 0.122 | NDM origin country |
+| 13 | year | 0.065 | Temporal creep signal |
+
+The top feature is an autoregressive country-level lag, so part of the signal is persistence of local resistance rather than isolate biology. KPC ranks above NDM because the training period (2008-2018) is KPC-dominated; NDM became prevalent later and is underrepresented in training, which is a data recency limitation, not a model error. `is_censored` is no longer a feature. These rankings still require validation by the domain expert for biological plausibility before publication.
+
+For *A. baumannii* (`api_abaumannii_shap_importance.json`) the ranking is led by `lag1_pct_resistant_ctry`, then `year`, `ward_icu`, `age_paediatric` and `age_elderly`; OXA gene flags do not appear in the top 12, although OXA-type carbapenemases are the dominant mechanism in this species. This needs expert review (see `docs/shap_validation_checklist.md`).
+
+### 7.4 Additional Experiments (both species)
+
+Script: `scripts/pipeline/6_run_improvements.py`. Same features, hyperparameters and time split as the production models (train 2008-2018, test 2019-2022). Full tables: `reports/model/improvements_{species}.md`.
+
+Production `xgb_tuned` is trained with 3x sample weight on resistant isolates (MIC >= 8 mg/L), so the "resistant x3" row is the production recipe. The "unweighted" row is a reference without that weighting.
+
+*K. pneumoniae* (RMSE in log2 units, resistant = MIC >= 8 mg/L):
+
+| Variant | RMSE all | RMSE resistant | Sensitivity (R) |
+|---------|----------|----------------|-----------------|
+| Unweighted XGBoost | 1.77 | 2.90 | 0.75 |
+| Recency weighting | 1.78 | 2.85 | 0.74 |
+| LightGBM | 1.78 | 2.88 | 0.74 |
+| NDM/OXA weighting | 1.79 | 2.86 | 0.74 |
+| Resistant x3 (production recipe) | 2.22 | 2.17 | 0.83 |
+| Tobit debiased targets | 2.11 | 3.12 | 0.72 |
+| Tobit as stacked feature | 2.45 | 5.50 | 0.15 |
+
+Findings:
+- Resistant weighting is the only change that materially improves the clinically relevant subset, at the cost of overall RMSE. Recency weighting and LightGBM give differences too small to justify changing the pipeline.
+- Tobit variants did not help. About 67% of K. pneumoniae training targets are left-censored, and both uses of Tobit (debiased targets, stacked feature) scored worse than the unweighted reference. The Tobit year coefficient is conditional on the gene-by-year interaction features and is not reported as a creep rate.
+- Censoring bounds for Tobit are approximate: the imputed floor varies by panel, and a single left bound per species was used (K. pneumoniae log2 0.06 mg/L, A. baumannii 0.5 mg/L).
+- EUCAST classification (R / not R at 8 mg/L): the dedicated P(R) classifier for *K. pneumoniae* reaches AUC 0.975, sensitivity 0.834 and specificity 0.984 on 2019-2022.
+- Subgroups (resistant RMSE, resistant x3 model): *K. pneumoniae* military proxy 1.90, paediatric 2.40, other 2.16. Subgroup MIC90 slopes are in the generated report. The military proxy is small (775 test isolates) and approximate.
+
+*A. baumannii* (ATLAS-only data, resistant RMSE on 2019-2022): unweighted XGBoost 1.67, recency weighting 1.69, NDM/OXA weighting 1.68, LightGBM 1.61, Tobit debiased targets 1.46, Tobit as a stacked feature 1.48, resistant x3 (production recipe) **0.995** with sensitivity 0.94. The Tobit variants beat the unweighted reference (14.6% of training targets are left-censored) but remain far from the production recipe, so Tobit was not adopted for either species. The Tobit year coefficient (-0.10 log2/yr against +0.13 naive) is conditional on the interaction features and is not reported as a creep rate. The experiment's P(R) classifier reached AUC 0.842 (0.845 with the export recipe). Subgroups (resistant RMSE, production recipe): paediatric 1.67, military proxy 1.37, other 0.93.
+
+Opt 7 feature set (continent one-hot encoding plus a 3-year trailing per-country MIC90) for *A. baumannii*, re-tuned with Optuna on the ATLAS-only data (`3e_run_optuna_opt7.py`): resistant RMSE 1.003 against 0.995 for production, overall RMSE 2.688 against 2.684, so no improvement. An earlier gain (1.045 against 1.135) came from the pre-rebuild data that wrongly included supplementary datasets and did not hold. With the old hyperparameters the feature set was clearly worse (1.66). For the P(R) classifier the Opt 7 features gave AUC 0.847 against 0.845, also no meaningful gain. Not promoted.
+
+P(R) classifier tuning for *A. baumannii* (`8_tune_pr_classifier.py`, 50 Optuna trials, validation on training years 2016-2018, test untouched during tuning), ATLAS-only data: the tuned classifier was worse than the production recipe on test (AUC 0.837 against 0.845, log-loss 0.448 against 0.437, yearly prevalence error 4.4 against 2.5 percentage points). A validation-chosen threshold (0.61) trades sensitivity for specificity (0.91 / 0.59 against 0.94 / 0.50 at 0.5); it is a choice, not an improvement. An earlier run on the pre-rebuild mixed data suggested tuning halves the prevalence error; that did not replicate, so the production recipe is kept. The 2016-2018 validation years are few and sit in a different prevalence regime than the test years, so tuning on them may not transfer. An AUC near 0.84 appears to be the ceiling for the current feature set.
+
+Robustness of the *A. baumannii* prevalence trend (`9_check_prevalence_trend.py`, ATLAS-only data, `reports/model/prevalence_trend_check_abaumannii.md`): observed prevalence steps from 44% (2011) to 62% (2012), reaches 69% in 2018, and is 70.0 / 69.5 / 71.2 / 67.3% in 2019-2022. Re-weighting each year to a fixed country mix (pooled 2008-2022 shares) gives 63.6 / 61.2 / 62.1 / 58.8% for 2019-2022, so the high raw test-year level is partly a change in which countries contribute isolates. The logit-linear slope is +0.078/yr raw over 2008-2022 (p 0.0001) but +0.028/yr standardised (p 0.034), and 2012-2022 alone is +0.032/yr (p 0.060). The 2011-2012 step is partly composition (Turkey and Mexico enter in 2012, and only 30 countries contribute in 2011) but also appears within countries (for example Germany 13% to 49%, Spain 55% to 73%, United States 36% to 49%), which may reflect a change in surveillance sampling rather than epidemiology; this is unresolved. The p-values use 11 to 15 autocorrelated annual points and are optimistic. The exported raw-trend fit (2008-2018, +0.0976 logit/yr, R2 0.659, p 0.0024) predicts 76.8% for 2022 against 67.3% observed and extrapolates to 83% for 2026, so the forecast should be read as an upper-end projection, not a measured creep rate. Isolates with no country column set are assigned the reference country used in the export (Argentina), and rare countries are pooled.
+
+Feature and structure experiments (`3d_run_feature_experiments.py`, evaluated against production `xgb_tuned`): continent one-hot encoding, a rolling country MIC90, and tiered models (separate models for high- and low-resistance geographies) all lowered overall RMSE for *K. pneumoniae* (1.79 to 1.82 against 2.22) but made resistant-subset RMSE clearly worse (2.85 to 2.95 against 2.17), so none was adopted. The same pattern held for *A. baumannii* (resistant RMSE 1.5 to 2.3 against 1.135), but that run used the pre-rebuild mixed data and was not repeated on the ATLAS-only data; the gap is large enough that the direction is unlikely to change.
+
+Not available in the local data, so not tested: SENTRY, post-2020 NDM-rich data, and a carbapenem consumption file (`data/external/carbapenem_ddd.csv`). ATLAS has no hospital/community-acquired flag, so the ward/specialty features serve as the infection setting proxy.
 
 ---
 

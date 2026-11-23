@@ -140,8 +140,8 @@ export default function MethodologyPage() {
           </table>
         </div>
         <p className="text-xs text-gray-500">
-          K. pneumoniae: ~106 features (55 country dummies + 5 ward dummies + 6 gene flags + 6 gene×year + lag + 3 projected prevalence + demographics + specimen + pct_censored).
-          A. baumannii: ~96 features (same structure, 1 projected prevalence curve).
+          K. pneumoniae: 93 feature columns (country dummies, 5 ward dummies, 6 gene flags, 6 gene×year terms, lag, 3 projected prevalence curves, demographics, specimen, pct_censored).
+          A. baumannii: 84 feature columns (same structure, 1 projected prevalence curve).
           The time split is strictly chronological - 2008-2018 train, 2019-2022 test, never shuffled.
           Pre-2008 years excluded due to sparse sampling (n &lt; 4,000/year).
         </p>
@@ -219,12 +219,12 @@ export default function MethodologyPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
-                  ["P(R) classifier AUC-ROC", "0.981", "Near-perfect separation of resistant vs susceptible isolates"],
-                  ["Logistic trend slope", "+0.074 logit/yr", "Steady increase in resistance probability year on year"],
-                  ["Trend R² (2008-2022)", "0.473", "47% of year-to-year prevalence variance explained by time alone"],
-                  ["Trend p-value", "0.019", "Resistance increase is statistically significant"],
-                  ["Resistance prevalence 2022", "~70%", "Up from ~44% in 2008"],
-                  ["Forecast 2026", "~77%", "Extrapolated from logistic trend"],
+                  ["P(R) classifier AUC-ROC", "0.845", "Moderate discrimination on 2019-2022: sensitivity 0.94, specificity 0.50 at a 0.5 threshold"],
+                  ["Logistic trend slope (fit 2008-2018)", "+0.098 logit/yr", "Raw observed rate. With a fixed country mix the 2008-2022 slope is about +0.028 logit/yr"],
+                  ["Trend R² (fit 2008-2018)", "0.659", "47% of year-to-year prevalence variance explained by time alone"],
+                  ["Trend p-value", "0.0024", "Based on 11 autocorrelated annual points, so optimistic; 2012-2022 alone shows no clear trend (+0.032 logit/yr, p = 0.06)"],
+                  ["Resistance prevalence 2022", "67%", "Up from 44% in 2008, with a step between 2011 and 2012. 59% with a fixed country mix"],
+                  ["Forecast 2026", "~83%", "Upper-end projection from the raw trend, which already overshoots 2022 (77% fitted, 67% observed); a country-standardised trend is flatter"],
                 ].map(([metric, val, interp]) => (
                   <tr key={metric} className="even:bg-gray-50">
                     <td className="px-3 py-2 text-gray-700 text-xs font-medium">{metric}</td>
@@ -304,11 +304,11 @@ export default function MethodologyPage() {
           </p>
           <p className="font-semibold mt-1">Walk-forward CV findings (A. baumannii):</p>
           <p>
-            Mean RMSE 2.43 &plusmn; 0.21; R&#178; 0.29 &plusmn; 0.08. Regression quality is
+            Mean RMSE 2.44 &plusmn; 0.26; R&#178; 0.29 &plusmn; 0.09. Regression quality is
             low but expected: the bimodal MIC distribution creates a difficult regression target.
             MIC&#x2090; was correctly predicted at ceiling (32 mg/L) in all 6 folds because
             P(R) exceeded 10% in every year from 2014 onward. The P(R) classifier mean error
-            across folds was -2.3 percentage points.
+            across folds was -2.9 percentage points.
           </p>
         </div>
 

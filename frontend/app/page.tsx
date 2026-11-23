@@ -10,8 +10,8 @@ const SPECIES_LABEL: Record<string, string> = {
 };
 
 const SPECIES_AUC: Record<string, number> = {
-  kpneumoniae: 0.982,
-  abaumannii:  0.981,
+  kpneumoniae: 0.971,
+  abaumannii:  0.845,
 };
 
 async function getTrend(species: string) {
@@ -77,7 +77,7 @@ export default async function Home({
 }) {
   const { species = "kpneumoniae" } = await searchParams;
   const speciesLabel = SPECIES_LABEL[species] ?? "K. pneumoniae";
-  const auc = SPECIES_AUC[species] ?? 0.982;
+  const auc = SPECIES_AUC[species] ?? 0.971;
   const legendItems = species === "abaumannii" ? LEGEND_ITEMS_ABAUMANNII : LEGEND_ITEMS_KPNEUMONIAE;
 
   const trend = await getTrend(species);
@@ -132,10 +132,20 @@ export default async function Home({
             <strong>Primary metric for A. baumannii.</strong> MIC&#x2090; has been at the ATLAS panel
             ceiling (32 mg/L) since 2008 and carries no trend information. Resistance burden is
             tracked through prevalence: percentage of isolates with MIC &ge; 8 mg/L.
-            Blue = observed rate; green dashed = P(R) classifier (AUC-ROC = {auc.toFixed(3)}).
+            Blue = observed rate; orange = observed rate re-weighted to a fixed country mix;
+            green dashed = P(R) classifier (AUC-ROC = {auc.toFixed(3)}).
+          </p>
+          <p className="text-xs text-gray-500 mb-2">
+            The observed rate rises from 44% (2008) to about 70% (2019-2022), with a step between
+            2011 and 2012. Part of the rise in the test years reflects which countries contribute
+            isolates: with a fixed country mix the rate is 59-64% in 2019-2022 and the 2008-2022
+            trend is about 0.028 logit/yr (p = 0.03) instead of 0.078 on the raw rate.
           </p>
           <p className="text-xs text-gray-400 mb-5">
-            Logistic trend: +0.098 logit/yr, R&#178; = 0.66, p = 0.002. Forecast: ~77% by 2026.
+            Raw-rate logistic trend fitted on 2008-2018: +0.098 logit/yr, R&#178; = 0.66, p = 0.002.
+            It already overshoots the observed test years (77% fitted for 2022 against 67% observed)
+            and extrapolates to about 83% by 2026; treat this as an upper-end projection, not a
+            measured creep rate.
           </p>
           <ResistanceTrendChart data={trend.data} auc={auc} />
         </section>

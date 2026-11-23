@@ -141,7 +141,32 @@ def _country_stratified_mic90(g: pd.DataFrame, pr_col: str = "prob_resistant") -
     return round(weighted, 4)
 
 
-def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_model=None) -> None:
+def _standardised_prevalence(X_train, y_train, X_test, y_test) -> dict:
+    """Yearly resistance prevalence (%) re-weighted to a fixed country mix.
+
+    Weights = pooled 2008-2022 country shares. Removes year-to-year changes in
+    which countries contribute isolates (A. baumannii test years over-represent
+    high-resistance countries). Isolates with no country column set use the
+    reference country (see _reconstruct_country).
+    """
+    X_all = pd.concat([X_train, X_test.reindex(columns=X_train.columns, fill_value=0)],
+                      ignore_index=True)
+    y_all = np.concatenate([y_train.values, y_test.values])
+    df = pd.DataFrame({"year": X_all["year"].astype(int).values,
+                       "country": _reconstruct_country(X_all).values,
+                       "r": (y_all >= LOG2_R).astype(int)})
+    share = df["country"].value_counts(normalize=True)
+    by = df.groupby(["year", "country"])["r"].mean().unstack()
+    out = {}
+    for yr, row in by.iterrows():
+        row = row.dropna()
+        w = share.reindex(row.index)
+        out[int(yr)] = round(float((row * w / w.sum()).sum() * 100), 1)
+    return out
+
+
+def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_model=None,
+                       standardised=None) -> None:
     records = {}
 
     train_df = X_train[["year"]].copy()
@@ -191,6 +216,11 @@ def export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=None, q90_mo
             "forecast_log2_mic90": round(float(forecast_log2), 4),
             "source":              "forecast_extrapolated",
         }
+
+    if standardised:
+        for yr, v in standardised.items():
+            if yr in records:
+                records[yr]["pct_resistant_standardised"] = v
 
     out = sorted(records.values(), key=lambda r: r["year"])
     fname = f"api{_json_suffix}_mic90_trend.json"
@@ -465,7 +495,9 @@ def main() -> None:
     else:
         print(f"\n[{step_mic90}/{n}] MIC90 trend (actual + predicted + forecast)")
 
-    export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf, q90_model=q90_model)
+    std_prev = _standardised_prevalence(X_train, y_train, X_test, y_test) if is_abau else None
+    export_mic90_trend(X_train, y_train, X_test, y_test, model, clf=clf, q90_model=q90_model,
+                       standardised=std_prev)
 
     print(f"\n[{step_country}/{n}] Country stats + censoring lookup")
     export_country_stats(X_test, y_test, model)

@@ -40,3 +40,6 @@ scripts/utils/make_presentation.py
 notebooks/02_eda_temporal_trends.ipynb
 notebooks/03_geographic_antibiotic_profile.ipynb
 notebooks/04_atlas_eda.ipynb
+
+# Local backups of pre-rebuild data/models (isolate-level derived data, never commit)
+/backup_pre_atlas_only/

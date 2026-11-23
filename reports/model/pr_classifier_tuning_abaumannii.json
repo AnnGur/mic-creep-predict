@@ -1,0 +1,162 @@
+{
+  "species": "abaumannii",
+  "n_trials": 50,
+  "val_split": "train<2016",
+  "best_val_logloss": 0.49426549673080444,
+  "decay": 0.8259801552932281,
+  "youden_threshold": 0.611336886882782,
+  "params": {
+    "n_estimators": 800,
+    "max_depth": 10,
+    "learning_rate": 0.04618453180940641,
+    "subsample": 0.8524678017504056,
+    "colsample_bytree": 0.6869737465510425,
+    "min_child_weight": 27,
+    "gamma": 2.887762907216342,
+    "reg_alpha": 0.024934074102974116,
+    "reg_lambda": 0.18511458455887644,
+    "scale_pos_weight": 1.1781425633432097
+  },
+  "results": {
+    "P0 production recipe": {
+      "auc": 0.845231344162368,
+      "auc_pr": 0.9130192503178891,
+      "logloss": 0.4373626708984375,
+      "brier": 0.13883711397647858,
+      "threshold": 0.5,
+      "sensitivity": 0.9396707381837494,
+      "specificity": 0.5009704027171276,
+      "prevalence_mae_pp": 2.4866960066539323,
+      "prevalence_by_year": {
+        "2019": {
+          "obs": 70.0,
+          "pred": 71.3
+        },
+        "2020": {
+          "obs": 69.5,
+          "pred": 71.9
+        },
+        "2021": {
+          "obs": 71.2,
+          "pred": 72.8
+        },
+        "2022": {
+          "obs": 67.3,
+          "pred": 71.9
+        }
+      }
+    },
+    "P1 tuned": {
+      "auc": 0.8371200039784965,
+      "auc_pr": 0.9075430921515976,
+      "logloss": 0.448085755109787,
+      "brier": 0.14254595339298248,
+      "threshold": 0.5,
+      "sensitivity": 0.943919277748274,
+      "specificity": 0.4881125667151868,
+      "prevalence_mae_pp": 4.360061051247744,
+      "prevalence_by_year": {
+        "2019": {
+          "obs": 70.0,
+          "pred": 72.9
+        },
+        "2020": {
+          "obs": 69.5,
+          "pred": 73.8
+        },
+        "2021": {
+          "obs": 71.2,
+          "pred": 74.3
+        },
+        "2022": {
+          "obs": 67.3,
+          "pred": 74.3
+        }
+      }
+    },
+    "P2 tuned + Youden threshold": {
+      "auc": 0.8371200039784965,
+      "auc_pr": 0.9075430921515976,
+      "logloss": 0.448085755109787,
+      "brier": 0.14254595339298248,
+      "threshold": 0.611336886882782,
+      "sensitivity": 0.9081253319171535,
+      "specificity": 0.594129063561378,
+      "prevalence_mae_pp": 4.360061051247744,
+      "prevalence_by_year": {
+        "2019": {
+          "obs": 70.0,
+          "pred": 72.9
+        },
+        "2020": {
+          "obs": 69.5,
+          "pred": 73.8
+        },
+        "2021": {
+          "obs": 71.2,
+          "pred": 74.3
+        },
+        "2022": {
+          "obs": 67.3,
+          "pred": 74.3
+        }
+      }
+    },
+    "P3 production + Opt7 features": {
+      "auc": 0.8466370108916497,
+      "auc_pr": 0.9154042177114728,
+      "logloss": 0.4380735754966736,
+      "brier": 0.13955606520175934,
+      "threshold": 0.5,
+      "sensitivity": 0.938396176314392,
+      "specificity": 0.5089762251334303,
+      "prevalence_mae_pp": 2.682196261284975,
+      "prevalence_by_year": {
+        "2019": {
+          "obs": 70.0,
+          "pred": 71.2
+        },
+        "2020": {
+          "obs": 69.5,
+          "pred": 72.2
+        },
+        "2021": {
+          "obs": 71.2,
+          "pred": 73.0
+        },
+        "2022": {
+          "obs": 67.3,
+          "pred": 72.4
+        }
+      }
+    },
+    "P4 tuned + Opt7 features": {
+      "auc": 0.8436841754011928,
+      "auc_pr": 0.912694487865356,
+      "logloss": 0.4413240849971771,
+      "brier": 0.14070510864257812,
+      "threshold": 0.5,
+      "sensitivity": 0.9462559745087626,
+      "specificity": 0.48932557011159633,
+      "prevalence_mae_pp": 4.070211114285616,
+      "prevalence_by_year": {
+        "2019": {
+          "obs": 70.0,
+          "pred": 72.4
+        },
+        "2020": {
+          "obs": 69.5,
+          "pred": 73.3
+        },
+        "2021": {
+          "obs": 71.2,
+          "pred": 74.3
+        },
+        "2022": {
+          "obs": 67.3,
+          "pred": 74.3
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kpneumoniae": {
+    "n_train": 64429,
+    "n_test": 26681,
+    "n_features": 93,
+    "xgb_tuned": {
+      "rmse": 2.2238921378761813,
+      "rmse_resistant": 2.171627873439565
+    },
+    "xgb_hybrid": {
+      "skipped": "Feature shape mismatch, expected: 92, got 93"
+    },
+    "xgb_quantile": {
+      "rmse": 4.22381443582259,
+      "rmse_resistant": 1.1606924303331392
+    },
+    "pr_classifier_export_recipe": {
+      "auc": 0.9709937476564613,
+      "sensitivity": 0.8348432055749129,
+      "specificity": 0.9841347872720773
+    }
+  },
+  "abaumannii": {
+    "n_train": 20828,
+    "n_test": 13537,
+    "n_features": 84,
+    "xgb_tuned": {
+      "rmse": 2.6839531880357317,
+      "rmse_resistant": 0.9947153295707712
+    },
+    "xgb_hybrid": {
+      "skipped": "Feature shape mismatch, expected: 85, got 84"
+    },
+    "xgb_quantile": {
+      "rmse": 3.65731243369718,
+      "rmse_resistant": 0.2751346386760356
+    },
+    "pr_classifier_export_recipe": {
+      "auc": 0.845231344162368,
+      "sensitivity": 0.9396707381837494,
+      "specificity": 0.5009704027171276
+    }
+  }
+}
