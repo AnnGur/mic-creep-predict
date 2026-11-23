@@ -91,6 +91,7 @@ _country_stats:    dict[str, list[dict]]  = {}
 _shap_importance:  dict[str, list[dict]]  = {}
 _censoring_lookup: dict[str, dict[int, float]] = {}
 _lag_lookup:       dict[str, dict]        = {}  # species -> {country: {year_str: rate}}
+_gene_curves:      dict[str, dict]        = {}  # species -> {gene: [r, t0]} logistic curve parameters
 
 
 def _model_files(species: str) -> tuple[str, str]:
@@ -144,6 +145,11 @@ async def startup_event() -> None:
 
         lag_path = REPORTS / f"{prefix}_lag_lookup.json"
         _lag_lookup[species] = json.loads(lag_path.read_text()) if lag_path.exists() else {}
+
+        # Logistic gene-prevalence curves (r, t0) fitted on training data; used to rebuild
+        # the proj_{gene}_prev features, which depend only on the isolation year.
+        curves_path = REPORTS / f"{prefix}_gene_curves.json"
+        _gene_curves[species] = json.loads(curves_path.read_text()) if curves_path.exists() else {}
 
         print(f"  [{species}] loaded — {len(_feature_names[species])} features")
 
@@ -237,6 +243,13 @@ def _build_feature_vector(req: PredictionRequest) -> pd.DataFrame:
         col = f"{gene.replace('_pos', '')}_x_year"
         if col in row:
             row[col] = val * req.year
+
+    # Projected gene prevalence: p(t) = 1 / (1 + exp(-r * (t - t0))), same formula as
+    # src/features/engineer.py (_logistic). Without this the model receives 0 for these features.
+    for gene, (r, t0) in _gene_curves.get(req.species, {}).items():
+        col = f"proj_{gene}_prev"
+        if col in row:
+            row[col] = float(1.0 / (1.0 + np.exp(-r * (req.year - t0))))
 
     return pd.DataFrame([row])[feature_names]
 

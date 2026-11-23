@@ -195,7 +195,13 @@ python scripts/pipeline/4_run_export.py --species abaumannii
 cp data/processed/kpneumoniae/lag_lookup.json reports/api/api_kpneumoniae_lag_lookup.json
 cp data/processed/abaumannii/lag_lookup.json  reports/api/api_abaumannii_lag_lookup.json
 
-# 3. Upload models to HF Hub
+# 2b. Copy the gene-prevalence curve parameters (aggregate, 2 numbers per gene). The API needs them to
+#     rebuild the proj_{gene}_prev features; without them those features are silently 0 at inference.
+cp data/processed/kpneumoniae/gene_prevalence_curves.json reports/api/api_kpneumoniae_gene_curves.json
+cp data/processed/abaumannii/gene_prevalence_curves.json  reports/api/api_abaumannii_gene_curves.json
+
+# 3. Upload models to HF Hub (the three files per species that changed: xgb_tuned, xgb_quantile, feature_names; the
+#    API reads the feature list from HF, so model and feature_names must come from the same retrain)
 python scripts/utils/upload_to_huggingface.py
 
 # 4. Commit and push (triggers Render + Vercel redeploy)
